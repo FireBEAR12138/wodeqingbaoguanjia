@@ -6,10 +6,16 @@
       "use": "@vercel/node"
     }
   ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "src/index.ts"
+    }
+  ],
   "crons": [
     {
       "path": "/api/update-rss",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 } 
