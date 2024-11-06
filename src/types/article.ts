@@ -10,7 +10,7 @@ export interface Article {
   source_type: string;
 }
 
-export interface ArticleFilterParams {
+export interface ArticleFilter {
   startDate?: Date;
   endDate?: Date;
   author?: string;
