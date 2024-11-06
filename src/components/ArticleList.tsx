@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Article, ArticleFilter } from '../types/article';
+import { Article, ArticleFilterParams } from '../types/article';
 import { format } from 'date-fns';
 
 interface Props {
-  filter: ArticleFilter;
+  filter: ArticleFilterParams;
   timeOrder: 'asc' | 'desc';
   onTimeOrderChange: (order: 'asc' | 'desc') => void;
   onAddToSummary: (article: Article) => void;

@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { ArticleFilter } from '../types/article';
+import { ArticleFilterParams } from '../types/article';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 
 interface Props {
-  onFilterChange: (filter: ArticleFilter) => void;
+  onFilterChange: (filter: ArticleFilterParams) => void;
 }
 
 export default function ArticleFilter({ onFilterChange }: Props) {
-  const [filter, setFilter] = useState<ArticleFilter>({});
+  const [filter, setFilter] = useState<ArticleFilterParams>({});
 
-  const handleChange = (updates: Partial<ArticleFilter>) => {
+  const handleChange = (updates: Partial<ArticleFilterParams>) => {
     const newFilter = { ...filter, ...updates };
     setFilter(newFilter);
     onFilterChange(newFilter);
