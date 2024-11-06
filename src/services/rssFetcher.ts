@@ -1,6 +1,7 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import Parser from 'rss-parser';
 import { pool } from '../db/connection';
+import { RSSItem } from '../types/article';
 import { fetchTwitterFeed } from './twitterFetcher';
 
 const bedrock = new BedrockRuntimeClient({
@@ -12,9 +13,8 @@ const bedrock = new BedrockRuntimeClient({
 });
 
 export async function fetchAndProcessRSS() {
-    const parser = new Parser();
+    const parser = new Parser<{items: RSSItem[]}>();
     
-    // 获取所有RSS源
     const { rows: sources } = await pool.query('SELECT * FROM rss_sources');
     
     for (const source of sources) {
@@ -27,21 +27,23 @@ export async function fetchAndProcessRSS() {
             }
             
             for (const item of feed.items) {
+                if (!item.link) continue;
+                
                 // 检查文章是否已存在
                 const exists = await checkArticleExists(item.link);
                 if (exists) continue;
                 
                 // 生成AI摘要
-                const aiSummary = await generateAISummary(item.content || item.description);
+                const aiSummary = await generateAISummary(item.content || item.description || '');
                 
                 // 存储文章
                 await saveArticle({
                     sourceId: source.id,
-                    title: item.title,
+                    title: item.title || '无标题',
                     link: item.link,
-                    description: item.content || item.description,
+                    description: item.content || item.description || '',
                     pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
-                    author: item.author,
+                    author: item.author || '未知作者',
                     aiSummary
                 });
             }

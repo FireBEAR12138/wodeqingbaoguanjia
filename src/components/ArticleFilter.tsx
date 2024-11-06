@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArticleFilter } from '../types/article';
+import type { ArticleFilter } from '../types/article';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 

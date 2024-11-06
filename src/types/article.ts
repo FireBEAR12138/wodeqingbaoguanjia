@@ -1,4 +1,12 @@
-export interface Article {
+export type ArticleFilter = {
+  startDate?: Date;
+  endDate?: Date;
+  author?: string;
+  source?: string;
+  sourceType?: string;
+}
+
+export type Article = {
   id: number;
   title: string;
   link: string;
@@ -10,10 +18,12 @@ export interface Article {
   source_type: string;
 }
 
-export interface ArticleFilter {
-  startDate?: Date;
-  endDate?: Date;
+// 为 RSS Parser 添加类型
+export type RSSItem = {
+  title: string;
+  link: string;
+  content?: string;
+  description?: string;
+  pubDate?: string;
   author?: string;
-  source?: string;
-  sourceType?: string;
 } 
