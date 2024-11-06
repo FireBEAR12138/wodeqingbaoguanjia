@@ -1,8 +1,12 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chrome from '@sparticuz/chromium';
 
 export async function fetchTwitterFeed(url: string) {
     const browser = await puppeteer.launch({
-        headless: true
+        args: chrome.args,
+        defaultViewport: chrome.defaultViewport,
+        executablePath: await chrome.executablePath(),
+        headless: true,
     });
     
     try {

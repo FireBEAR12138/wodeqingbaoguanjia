@@ -1,6 +1,7 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import Parser from 'rss-parser';
 import { pool } from '../db/connection';
+import { fetchTwitterFeed } from './twitterFetcher';
 
 const bedrock = new BedrockRuntimeClient({
     region: process.env.AWS_REGION,
