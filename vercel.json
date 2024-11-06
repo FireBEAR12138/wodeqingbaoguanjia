@@ -1,9 +1,17 @@
 {
-  "buildCommand": "next build",
-  "devCommand": "next dev",
-  "installCommand": "npm install",
-  "framework": "nextjs",
-  "outputDirectory": ".next",
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "src/index.ts"
+    }
+  ],
   "crons": [
     {
       "path": "/api/update-rss",
