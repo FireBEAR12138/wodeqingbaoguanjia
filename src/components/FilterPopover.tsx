@@ -13,6 +13,7 @@ interface FilterPopoverProps {
   onDateChange?: (start: Date | null, end: Date | null) => void;
   onSelectionChange?: (values: string[]) => void;
   onConfirm?: () => void;
+  showConfirmButtons?: boolean;
 }
 
 export default function FilterPopover({
@@ -24,7 +25,8 @@ export default function FilterPopover({
   endDate = null,
   onDateChange,
   onSelectionChange,
-  onConfirm
+  onConfirm,
+  showConfirmButtons = type === 'multiple'
 }: FilterPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -106,16 +108,25 @@ export default function FilterPopover({
             )}
           </div>
 
-          {type === 'multiple' && (
+          {showConfirmButtons && (
             <div className="p-3 border-t flex justify-end space-x-2">
               <button
-                onClick={() => onSelectionChange?.([])}
+                onClick={() => {
+                  if (type === 'date') {
+                    onDateChange?.(null, null);
+                  } else {
+                    onSelectionChange?.([]);
+                  }
+                }}
                 className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
               >
                 清除
               </button>
               <button
-                onClick={onConfirm}
+                onClick={() => {
+                  onConfirm?.();
+                  setIsOpen(false);
+                }}
                 className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 确定

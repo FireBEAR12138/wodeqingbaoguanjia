@@ -41,6 +41,10 @@ export default function ArticleList({
     start: null,
     end: null
   });
+  const [tempDateRange, setTempDateRange] = useState<{ start: Date | null; end: Date | null }>({
+    start: null,
+    end: null
+  });
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selectedSourceTypes, setSelectedSourceTypes] = useState<string[]>([]);
@@ -85,8 +89,11 @@ export default function ArticleList({
     });
   };
 
-  const handleFilterConfirm = (type: 'authors' | 'sources' | 'sourceTypes') => {
+  const handleFilterConfirm = (type: 'date' | 'authors' | 'sources' | 'sourceTypes') => {
     switch (type) {
+      case 'date':
+        setDateRange(tempDateRange);
+        break;
       case 'authors':
         setSelectedAuthors(tempAuthors);
         break;
@@ -99,8 +106,8 @@ export default function ArticleList({
     }
     
     onFilterChange({
-      startDate: dateRange.start,
-      endDate: dateRange.end,
+      startDate: type === 'date' ? tempDateRange.start : dateRange.start,
+      endDate: type === 'date' ? tempDateRange.end : dateRange.end,
       authors: type === 'authors' ? tempAuthors : selectedAuthors,
       sources: type === 'sources' ? tempSources : selectedSources,
       sourceTypes: type === 'sourceTypes' ? tempSourceTypes : selectedSourceTypes,
@@ -144,18 +151,11 @@ export default function ArticleList({
                     <FilterPopover
                       type="date"
                       title="筛选发布时间"
-                      startDate={dateRange.start}
-                      endDate={dateRange.end}
-                      onDateChange={(start, end) => {
-                        setDateRange({ start, end });
-                        onFilterChange({
-                          startDate: start,
-                          endDate: end,
-                          authors: selectedAuthors,
-                          sources: selectedSources,
-                          sourceTypes: selectedSourceTypes
-                        });
-                      }}
+                      startDate={tempDateRange.start}
+                      endDate={tempDateRange.end}
+                      onDateChange={(start, end) => setTempDateRange({ start, end })}
+                      onConfirm={() => handleFilterConfirm('date')}
+                      showConfirmButtons={true}
                     />
                   </div>
                 </div>
@@ -188,6 +188,19 @@ export default function ArticleList({
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 来源
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center space-x-2">
+                  <span>来源</span>
+                  <FilterPopover
+                    type="multiple"
+                    title="筛选来源"
+                    options={uniqueSourceTypes}
+                    selectedValues={tempSourceTypes}
+                    onSelectionChange={setTempSourceTypes}
+                    onConfirm={() => handleFilterConfirm('sourceTypes')}
+                  />
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 操作
