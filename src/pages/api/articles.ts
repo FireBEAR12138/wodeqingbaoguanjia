@@ -19,50 +19,71 @@ export default async function handler(
     
     const offset = (Number(page) - 1) * Number(pageSize);
     
+    // 构建查询条件数组
+    const conditions = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (startDate) {
+      conditions.push(`a.pub_date >= $${paramIndex}`);
+      values.push(startDate);
+      paramIndex++;
+    }
+    
+    if (endDate) {
+      conditions.push(`a.pub_date <= $${paramIndex}`);
+      values.push(endDate);
+      paramIndex++;
+    }
+    
+    if (author) {
+      conditions.push(`a.author ILIKE $${paramIndex}`);
+      values.push(`%${author}%`);
+      paramIndex++;
+    }
+    
+    if (source) {
+      conditions.push(`s.name ILIKE $${paramIndex}`);
+      values.push(`%${source}%`);
+      paramIndex++;
+    }
+    
+    if (sourceType) {
+      conditions.push(`s.source_type = $${paramIndex}`);
+      values.push(sourceType);
+      paramIndex++;
+    }
+
+    // 构建WHERE子句
+    const whereClause = conditions.length > 0 
+      ? `WHERE ${conditions.join(' AND ')}`
+      : '';
+
     // 构建基础查询
-    let query = sql`
+    const baseQuery = `
       SELECT 
         a.*,
         s.name as source_name,
         s.source_type
       FROM rss_articles a
       JOIN rss_sources s ON a.source_id = s.id
-      WHERE 1=1
+      ${whereClause}
     `;
-
-    // 添加筛选条件
-    if (startDate) {
-      query = sql`${query} AND a.pub_date >= ${startDate}`;
-    }
-    
-    if (endDate) {
-      query = sql`${query} AND a.pub_date <= ${endDate}`;
-    }
-    
-    if (author) {
-      query = sql`${query} AND a.author ILIKE ${`%${author}%`}`;
-    }
-    
-    if (source) {
-      query = sql`${query} AND s.name ILIKE ${`%${source}%`}`;
-    }
-    
-    if (sourceType) {
-      query = sql`${query} AND s.source_type = ${sourceType}`;
-    }
 
     // 获取总数
-    const countResult = await sql`
-      SELECT COUNT(*) FROM (${query}) as count_query
-    `;
+    const countResult = await sql.query(
+      `SELECT COUNT(*) FROM (${baseQuery}) as count_query`,
+      values
+    );
     const total = parseInt(countResult.rows[0].count);
 
-    // 添加排序和分页
-    const result = await sql`
-      ${query}
-      ORDER BY a.pub_date ${timeOrder === 'desc' ? sql`DESC` : sql`ASC`}
-      LIMIT ${Number(pageSize)} OFFSET ${offset}
-    `;
+    // 获取分页数据
+    const result = await sql.query(
+      `${baseQuery}
+       ORDER BY a.pub_date ${timeOrder === 'desc' ? 'DESC' : 'ASC'}
+       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+      [...values, Number(pageSize), offset]
+    );
 
     res.status(200).json({
       articles: result.rows,
