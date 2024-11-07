@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../lib/db';
+import { sql } from '../../lib/db';
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,21 +10,21 @@ export default async function handler(
     const offset = (Number(page) - 1) * Number(pageSize);
 
     // 获取文章总数
-    const countResult = await db.query('SELECT COUNT(*) FROM rss_articles');
+    const countResult = await sql`SELECT COUNT(*) FROM rss_articles`;
     const total = parseInt(countResult.rows[0].count);
 
     // 获取分页的文章数据
-    const result = await db.query(
-      `SELECT 
+    const result = await sql`
+      SELECT 
         a.*,
         s.name as source_name,
         s.source_type
       FROM rss_articles a
       JOIN rss_sources s ON a.source_id = s.id
       ORDER BY a.pub_date DESC
-      LIMIT $1 OFFSET $2`,
-      [pageSize, offset]
-    );
+      LIMIT ${Number(pageSize)}
+      OFFSET ${offset}
+    `;
 
     res.status(200).json({
       articles: result.rows,
