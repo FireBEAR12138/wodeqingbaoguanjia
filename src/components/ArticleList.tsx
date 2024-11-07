@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { FaSort, FaSortUp, FaSortDown, FaCopy } from 'react-icons/fa';
+import { FaSort, FaSortUp, FaSortDown, FaCopy, FaFilter } from 'react-icons/fa';
 import type { Article } from '../types/article';
 import FilterPopover from './FilterPopover';
 
@@ -90,18 +90,61 @@ export default function ArticleList({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 AI概览
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => onTimeOrderChange(timeOrder === 'asc' ? 'desc' : 'asc')}
-              >
-                发布时间
-                {timeOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center space-x-2">
+                  <span>发布时间</span>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => onTimeOrderChange(timeOrder === 'asc' ? 'desc' : 'asc')}
+                      className="p-1"
+                    >
+                      {timeOrder === 'asc' ? <FaSortUp /> : <FaSortDown />}
+                    </button>
+                    <FilterPopover
+                      type="date"
+                      title="筛选发布时间"
+                      startDate={dateRange.start}
+                      endDate={dateRange.end}
+                      onDateChange={(start, end) => setDateRange({ start, end })}
+                    />
+                  </div>
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                作者
+                <div className="flex items-center space-x-2">
+                  <span>作者</span>
+                  <FilterPopover
+                    type="multiple"
+                    title="筛选作者"
+                    options={uniqueAuthors}
+                    selectedValues={selectedAuthors}
+                    onSelectionChange={setSelectedAuthors}
+                  />
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                订阅源
+                <div className="flex items-center space-x-2">
+                  <span>订阅源</span>
+                  <FilterPopover
+                    type="multiple"
+                    title="筛选订阅源"
+                    options={uniqueSources}
+                    selectedValues={selectedSources}
+                    onSelectionChange={setSelectedSources}
+                  />
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center space-x-2">
+                  <span>来源</span>
+                  <FilterPopover
+                    type="multiple"
+                    title="筛选来源"
+                    options={uniqueSourceTypes}
+                    selectedValues={selectedSourceTypes}
+                    onSelectionChange={setSelectedSourceTypes}
+                  />
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 操作
