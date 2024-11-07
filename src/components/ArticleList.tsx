@@ -1,27 +1,51 @@
 import { format } from 'date-fns';
+import { FaSort, FaSortUp, FaSortDown, FaCopy } from 'react-icons/fa';
 import type { Article } from '../types/article';
 
 interface Props {
   articles: Article[];
   loading: boolean;
+  error: string | null;
   page: number;
   totalPages: number;
+  timeOrder: 'asc' | 'desc';
+  onTimeOrderChange: (order: 'asc' | 'desc') => void;
   onPageChange: (page: number) => void;
+  onAddToSummary: (article: Article) => void;
+  selectedArticleIds: number[];
 }
 
 export default function ArticleList({
   articles,
   loading,
+  error,
   page,
   totalPages,
-  onPageChange
+  timeOrder,
+  onTimeOrderChange,
+  onPageChange,
+  onAddToSummary,
+  selectedArticleIds
 }: Props) {
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('已复制到剪贴板');
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
     );
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center py-4">{error}</div>;
   }
 
   return (
@@ -36,62 +60,108 @@ export default function ArticleList({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 AI概览
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                onClick={() => onTimeOrderChange(timeOrder === 'asc' ? 'desc' : 'asc')}
+              >
                 发布时间
+                {timeOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 作者
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                来源
+                订阅源
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                操作
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {articles.map((article) => (
-              <tr key={article.id}>
+              <tr key={article.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <a
                     href={article.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-blue-600 hover:text-blue-800 line-clamp-3"
                   >
                     {article.title}
                   </a>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="line-clamp-2">{article.ai_summary}</div>
+                  <div className="group relative">
+                    <div className="line-clamp-3">{article.ai_summary}</div>
+                    <div className="hidden group-hover:block absolute z-10 w-96 p-4 bg-white shadow-lg rounded-lg">
+                      {article.ai_summary}
+                      <button
+                        onClick={() => copyToClipboard(article.ai_summary)}
+                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                      >
+                        <FaCopy />
+                      </button>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {format(new Date(article.pub_date), 'yyyy-MM-dd HH:mm')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{article.author}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{article.source_name}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {selectedArticleIds.includes(article.id) ? (
+                    <span className="text-gray-500">已加入</span>
+                  ) : (
+                    <div className="space-x-2">
+                      <button
+                        onClick={() => onAddToSummary(article)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        加入AI总结
+                      </button>
+                      <button
+                        onClick={() => copyToClipboard(article.link)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <FaCopy className="inline" />
+                      </button>
+                    </div>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* 分页器 */}
       <div className="flex justify-center space-x-2">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
           className="px-3 py-1 rounded border disabled:opacity-50"
         >
-          上一页
+          ←
         </button>
-        <span className="px-3 py-1">
-          第 {page} 页，共 {totalPages} 页
-        </span>
+        {Array.from({ length: Math.min(4, totalPages) }, (_, i) => i + 1).map((pageNum) => (
+          <button
+            key={pageNum}
+            onClick={() => onPageChange(pageNum)}
+            className={`px-3 py-1 rounded border ${
+              page === pageNum ? 'bg-blue-500 text-white' : ''
+            }`}
+          >
+            {pageNum}
+          </button>
+        ))}
+        {totalPages > 4 && <span>...</span>}
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page === totalPages}
           className="px-3 py-1 rounded border disabled:opacity-50"
         >
-          下一页
+          →
         </button>
       </div>
     </div>
