@@ -1,14 +1,17 @@
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import type { Browser } from 'puppeteer-core';
 
 export async function fetchTwitterFeed(url: string) {
-    let browser = null;
+    let browser: Browser | null = null;
     
     try {
-        browser = await puppeteer.launch({
-            args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(),
+        // 动态导入以避免服务端渲染问题
+        const puppeteer = await import('puppeteer-core');
+        const chromium = await import('@sparticuz/chromium');
+        
+        browser = await puppeteer.default.launch({
+            args: chromium.default.args,
+            defaultViewport: chromium.default.defaultViewport,
+            executablePath: await chromium.default.executablePath(),
             headless: true,
         });
         
@@ -25,6 +28,9 @@ export async function fetchTwitterFeed(url: string) {
         return {
             items: [] // 实现具体的推文抓取逻辑
         };
+    } catch (error) {
+        console.error('Error fetching Twitter feed:', error);
+        return { items: [] };
     } finally {
         if (browser) {
             await browser.close();

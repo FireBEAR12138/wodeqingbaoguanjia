@@ -18,7 +18,8 @@
     "react-datepicker": "^4.8.0",
     "rss-parser": "^3.13.0",
     "puppeteer-core": "^21.5.2",
-    "@sparticuz/chromium": "^118.0.0"
+    "@sparticuz/chromium": "^118.0.0",
+    "cron": "^3.1.6"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -27,6 +28,7 @@
     "@types/react-beautiful-dnd": "^13.1.1",
     "@types/react-datepicker": "^4.8.0",
     "@types/puppeteer-core": "^7.0.4",
+    "@types/cron": "^2.4.0",
     "typescript": "^5.0.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
