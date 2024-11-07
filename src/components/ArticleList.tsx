@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { FaSort, FaSortUp, FaSortDown, FaCopy, FaFilter } from 'react-icons/fa';
+import { FaSort, FaSortUp, FaSortDown, FaCopy } from 'react-icons/fa';
 import type { Article } from '../types/article';
 import FilterPopover from './FilterPopover';
 
@@ -44,6 +44,11 @@ export default function ArticleList({
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selectedSourceTypes, setSelectedSourceTypes] = useState<string[]>([]);
+  
+  // 添加临时筛选状态
+  const [tempAuthors, setTempAuthors] = useState<string[]>([]);
+  const [tempSources, setTempSources] = useState<string[]>([]);
+  const [tempSourceTypes, setTempSourceTypes] = useState<string[]>([]);
 
   // 获取所有可用的选项
   const uniqueAuthors = Array.from(new Set(articles.map(a => a.author)));
@@ -77,6 +82,28 @@ export default function ArticleList({
       authors: selectedAuthors,
       sources: selectedSources,
       sourceTypes: selectedSourceTypes
+    });
+  };
+
+  const handleFilterConfirm = (type: 'authors' | 'sources' | 'sourceTypes') => {
+    switch (type) {
+      case 'authors':
+        setSelectedAuthors(tempAuthors);
+        break;
+      case 'sources':
+        setSelectedSources(tempSources);
+        break;
+      case 'sourceTypes':
+        setSelectedSourceTypes(tempSourceTypes);
+        break;
+    }
+    
+    onFilterChange({
+      startDate: dateRange.start,
+      endDate: dateRange.end,
+      authors: type === 'authors' ? tempAuthors : selectedAuthors,
+      sources: type === 'sources' ? tempSources : selectedSources,
+      sourceTypes: type === 'sourceTypes' ? tempSourceTypes : selectedSourceTypes,
     });
   };
 
@@ -119,7 +146,16 @@ export default function ArticleList({
                       title="筛选发布时间"
                       startDate={dateRange.start}
                       endDate={dateRange.end}
-                      onDateChange={handleDateChange}
+                      onDateChange={(start, end) => {
+                        setDateRange({ start, end });
+                        onFilterChange({
+                          startDate: start,
+                          endDate: end,
+                          authors: selectedAuthors,
+                          sources: selectedSources,
+                          sourceTypes: selectedSourceTypes
+                        });
+                      }}
                     />
                   </div>
                 </div>
@@ -131,8 +167,9 @@ export default function ArticleList({
                     type="multiple"
                     title="筛选作者"
                     options={uniqueAuthors}
-                    selectedValues={selectedAuthors}
-                    onSelectionChange={setSelectedAuthors}
+                    selectedValues={tempAuthors}
+                    onSelectionChange={setTempAuthors}
+                    onConfirm={() => handleFilterConfirm('authors')}
                   />
                 </div>
               </th>
@@ -143,22 +180,14 @@ export default function ArticleList({
                     type="multiple"
                     title="筛选订阅源"
                     options={uniqueSources}
-                    selectedValues={selectedSources}
-                    onSelectionChange={setSelectedSources}
+                    selectedValues={tempSources}
+                    onSelectionChange={setTempSources}
+                    onConfirm={() => handleFilterConfirm('sources')}
                   />
                 </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <div className="flex items-center space-x-2">
-                  <span>来源</span>
-                  <FilterPopover
-                    type="multiple"
-                    title="筛选来源"
-                    options={uniqueSourceTypes}
-                    selectedValues={selectedSourceTypes}
-                    onSelectionChange={setSelectedSourceTypes}
-                  />
-                </div>
+                来源
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 操作
@@ -201,6 +230,7 @@ export default function ArticleList({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{article.author}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{article.source_name}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{article.source_type}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {selectedArticleIds.includes(article.id) ? (
                     <span className="text-gray-500">已加入</span>

@@ -12,6 +12,7 @@ interface FilterPopoverProps {
   endDate?: Date | null;
   onDateChange?: (start: Date | null, end: Date | null) => void;
   onSelectionChange?: (values: string[]) => void;
+  onConfirm?: () => void;
 }
 
 export default function FilterPopover({
@@ -22,7 +23,8 @@ export default function FilterPopover({
   startDate = null,
   endDate = null,
   onDateChange,
-  onSelectionChange
+  onSelectionChange,
+  onConfirm
 }: FilterPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -113,7 +115,7 @@ export default function FilterPopover({
                 清除
               </button>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={onConfirm}
                 className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 确定
