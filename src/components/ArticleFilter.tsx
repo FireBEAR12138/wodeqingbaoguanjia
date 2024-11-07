@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
 import type { ArticleFilter } from '../types/article';
+import "react-datepicker/dist/react-datepicker.css";
 
 interface Props {
   onFilterChange: (filter: ArticleFilter) => void;
@@ -28,6 +28,7 @@ export default function ArticleFilter({ onFilterChange }: Props) {
             onChange={(date) => handleChange({ startDate: date || undefined })}
             className="w-full px-3 py-2 border rounded-md"
             placeholderText="选择开始日期"
+            dateFormat="yyyy-MM-dd"
           />
         </div>
 
@@ -40,6 +41,8 @@ export default function ArticleFilter({ onFilterChange }: Props) {
             onChange={(date) => handleChange({ endDate: date || undefined })}
             className="w-full px-3 py-2 border rounded-md"
             placeholderText="选择结束日期"
+            dateFormat="yyyy-MM-dd"
+            minDate={filter.startDate}
           />
         </div>
 
@@ -68,6 +71,18 @@ export default function ArticleFilter({ onFilterChange }: Props) {
             placeholder="输入订阅源名称"
           />
         </div>
+      </div>
+
+      <div className="mt-4 flex justify-end space-x-2">
+        <button
+          onClick={() => {
+            setFilter({});
+            onFilterChange({});
+          }}
+          className="px-4 py-2 text-gray-600 hover:text-gray-800"
+        >
+          重置筛选
+        </button>
       </div>
     </div>
   );
