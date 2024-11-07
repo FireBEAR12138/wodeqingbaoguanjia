@@ -13,15 +13,46 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [timeOrder, setTimeOrder] = useState<'asc' | 'desc'>('desc');
+  
+  const [filters, setFilters] = useState<{
+    startDate?: Date | null;
+    endDate?: Date | null;
+    authors?: string[];
+    sources?: string[];
+    sourceTypes?: string[];
+  }>({});
 
   useEffect(() => {
     fetchArticles();
-  }, [page, timeOrder]);
+  }, [page, timeOrder, filters]);
 
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/articles?page=${page}&pageSize=10&timeOrder=${timeOrder}`);
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: '10',
+        timeOrder
+      });
+
+      if (filters.startDate) {
+        params.append('startDate', filters.startDate.toISOString());
+      }
+      if (filters.endDate) {
+        params.append('endDate', filters.endDate.toISOString());
+      }
+      if (filters.authors?.length) {
+        params.append('authors', filters.authors.join(','));
+      }
+      if (filters.sources?.length) {
+        params.append('sources', filters.sources.join(','));
+      }
+      if (filters.sourceTypes?.length) {
+        params.append('sourceTypes', filters.sourceTypes.join(','));
+      }
+
+      const response = await fetch(`/api/articles?${params}`);
       if (!response.ok) throw new Error('Failed to fetch articles');
       
       const data = await response.json();
@@ -32,6 +63,17 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFilterChange = (newFilters: {
+    startDate?: Date | null;
+    endDate?: Date | null;
+    authors?: string[];
+    sources?: string[];
+    sourceTypes?: string[];
+  }) => {
+    setFilters(newFilters);
+    setPage(1);
   };
 
   const handleAddToSummary = (article: Article) => {
@@ -66,6 +108,7 @@ export default function Home() {
               onPageChange={setPage}
               onAddToSummary={handleAddToSummary}
               selectedArticleIds={selectedArticles.map(a => a.id)}
+              onFilterChange={handleFilterChange}
             />
           </div>
           
