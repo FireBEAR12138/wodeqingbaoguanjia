@@ -1,36 +1,33 @@
-import { useState } from 'react';
-import { Article, ArticleFilter } from '../types/article';
 import { format } from 'date-fns';
+import type { Article } from '../types/article';
 
 interface Props {
-  filter: ArticleFilter;
-  timeOrder: 'asc' | 'desc';
-  onTimeOrderChange: (order: 'asc' | 'desc') => void;
-  onAddToSummary: (article: Article) => void;
-  selectedArticleIds: number[];
+  articles: Article[];
+  loading: boolean;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export default function ArticleList({
-  filter,
-  timeOrder,
-  onTimeOrderChange,
-  onAddToSummary,
-  selectedArticleIds
+  articles,
+  loading,
+  page,
+  totalPages,
+  onPageChange
 }: Props) {
-  const [page, setPage] = useState(1);
-  const [articles, setArticles] = useState<Article[]>([]);
-  const pageSize = 10;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {/* 筛选器 */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        {/* 实现筛选器UI */}
-      </div>
-
-      {/* 文章表格 */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full">
+        <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -39,60 +36,38 @@ export default function ArticleList({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 AI概览
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => onTimeOrderChange(timeOrder === 'asc' ? 'desc' : 'asc')}>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 发布时间
-                {/* 添加排序图标 */}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 作者
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                订阅源
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 来源
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                操作
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {articles.map(article => (
+            {articles.map((article) => (
               <tr key={article.id}>
                 <td className="px-6 py-4">
-                  <a href={article.link} target="_blank" rel="noopener noreferrer"
-                     className="text-blue-600 hover:text-blue-800 line-clamp-3">
+                  <a
+                    href={article.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800"
+                  >
                     {article.title}
                   </a>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="group relative">
-                    <div className="line-clamp-3">{article.ai_summary}</div>
-                    {/* 悬浮预览 */}
-                    <div className="hidden group-hover:block absolute z-10 w-96 p-4 bg-white shadow-lg rounded-lg">
-                      {article.ai_summary}
-                    </div>
-                  </div>
+                  <div className="line-clamp-2">{article.ai_summary}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {format(new Date(article.pub_date), 'yyyy-MM-dd HH:mm')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{article.author}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{article.source_name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{article.source_type}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {selectedArticleIds.includes(article.id) ? (
-                    <span className="text-gray-500">已加入</span>
-                  ) : (
-                    <button
-                      onClick={() => onAddToSummary(article)}
-                      className="text-blue-600 hover:text-blue-800">
-                      加入AI总结
-                    </button>
-                  )}
-                </td>
               </tr>
             ))}
           </tbody>
@@ -101,7 +76,23 @@ export default function ArticleList({
 
       {/* 分页器 */}
       <div className="flex justify-center space-x-2">
-        {/* 实现分页器UI */}
+        <button
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 1}
+          className="px-3 py-1 rounded border disabled:opacity-50"
+        >
+          上一页
+        </button>
+        <span className="px-3 py-1">
+          第 {page} 页，共 {totalPages} 页
+        </span>
+        <button
+          onClick={() => onPageChange(page + 1)}
+          disabled={page === totalPages}
+          className="px-3 py-1 rounded border disabled:opacity-50"
+        >
+          下一页
+        </button>
       </div>
     </div>
   );

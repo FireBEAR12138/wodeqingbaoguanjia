@@ -1,38 +1,48 @@
-import { useState } from 'react';
-import { Article, ArticleFilter } from '../types/article';
-import Sidebar from '../components/Sidebar';
+import { useState, useEffect } from 'react';
+import type { Article } from '../types/article';
 import ArticleList from '../components/ArticleList';
-import AISummaryPanel from '../components/AISummaryPanel';
 
 export default function Home() {
-  const [selectedArticles, setSelectedArticles] = useState<Article[]>([]);
-  const [filter, setFilter] = useState<ArticleFilter>({});
-  const [timeOrder, setTimeOrder] = useState<'asc' | 'desc'>('desc');
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [page]);
+
+  const fetchArticles = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/articles?page=${page}&pageSize=10`);
+      if (!response.ok) throw new Error('Failed to fetch articles');
+      
+      const data = await response.json();
+      setArticles(data.articles);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取文章失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (error) {
+    return <div className="text-red-500 text-center p-4">{error}</div>;
+  }
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* 左侧导航 */}
-      <Sidebar />
-
-      {/* 主内容区 */}
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6">
-          <ArticleList
-            filter={filter}
-            timeOrder={timeOrder}
-            onTimeOrderChange={setTimeOrder}
-            onAddToSummary={(article) => 
-              setSelectedArticles(prev => [...prev, article])
-            }
-            selectedArticleIds={selectedArticles.map(a => a.id)}
-          />
-        </div>
-
-        {/* 右侧AI总结面板 */}
-        <AISummaryPanel
-          articles={selectedArticles}
-          onArticlesChange={setSelectedArticles}
-          onClear={() => setSelectedArticles([])}
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6">RSS 聚合阅读器</h1>
+        <ArticleList
+          articles={articles}
+          loading={loading}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
         />
       </div>
     </div>
