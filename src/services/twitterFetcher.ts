@@ -1,14 +1,14 @@
-import chromium from 'chrome-aws-lambda';
-import type { Browser } from 'puppeteer-core';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 
 export async function fetchTwitterFeed(url: string) {
-    let browser: Browser | null = null;
+    let browser = null;
     
     try {
-        browser = await chromium.puppeteer.launch({
+        browser = await puppeteer.launch({
             args: chromium.args,
             defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath,
+            executablePath: await chromium.executablePath(),
             headless: true,
         });
         
