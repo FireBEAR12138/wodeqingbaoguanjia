@@ -16,8 +16,8 @@ interface Props {
   onAddToSummary: (article: Article) => void;
   selectedArticleIds: number[];
   onFilterChange: (filters: {
-    startDate?: Date;
-    endDate?: Date;
+    startDate?: Date | null;
+    endDate?: Date | null;
     authors?: string[];
     sources?: string[];
     sourceTypes?: string[];
@@ -37,7 +37,10 @@ export default function ArticleList({
   selectedArticleIds,
   onFilterChange
 }: Props) {
-  const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({});
+  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
+    start: null,
+    end: null
+  });
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selectedSourceTypes, setSelectedSourceTypes] = useState<string[]>([]);
@@ -64,6 +67,17 @@ export default function ArticleList({
     } catch (err) {
       console.error('复制失败:', err);
     }
+  };
+
+  const handleDateChange = (start: Date | null, end: Date | null) => {
+    setDateRange({ start, end });
+    onFilterChange({
+      startDate: start,
+      endDate: end,
+      authors: selectedAuthors,
+      sources: selectedSources,
+      sourceTypes: selectedSourceTypes
+    });
   };
 
   if (loading) {
@@ -105,7 +119,7 @@ export default function ArticleList({
                       title="筛选发布时间"
                       startDate={dateRange.start}
                       endDate={dateRange.end}
-                      onDateChange={(start, end) => setDateRange({ start, end })}
+                      onDateChange={handleDateChange}
                     />
                   </div>
                 </div>
