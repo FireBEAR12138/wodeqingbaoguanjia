@@ -6,84 +6,25 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const { 
-      page = '1', 
-      pageSize = '10',
-      timeOrder = 'desc',
-      startDate,
-      endDate,
-      author,
-      source,
-      sourceType
-    } = req.query;
-    
+    const { page = '1', pageSize = '10' } = req.query;
     const offset = (Number(page) - 1) * Number(pageSize);
-    
-    // 构建查询条件数组
-    const conditions = [];
-    const values = [];
-    let paramIndex = 1;
 
-    if (startDate) {
-      conditions.push(`a.pub_date >= $${paramIndex}`);
-      values.push(startDate);
-      paramIndex++;
-    }
-    
-    if (endDate) {
-      conditions.push(`a.pub_date <= $${paramIndex}`);
-      values.push(endDate);
-      paramIndex++;
-    }
-    
-    if (author) {
-      conditions.push(`a.author ILIKE $${paramIndex}`);
-      values.push(`%${author}%`);
-      paramIndex++;
-    }
-    
-    if (source) {
-      conditions.push(`s.name ILIKE $${paramIndex}`);
-      values.push(`%${source}%`);
-      paramIndex++;
-    }
-    
-    if (sourceType) {
-      conditions.push(`s.source_type = $${paramIndex}`);
-      values.push(sourceType);
-      paramIndex++;
-    }
+    // 获取文章总数
+    const countResult = await sql`SELECT COUNT(*) FROM rss_articles`;
+    const total = parseInt(countResult.rows[0].count);
 
-    // 构建WHERE子句
-    const whereClause = conditions.length > 0 
-      ? `WHERE ${conditions.join(' AND ')}`
-      : '';
-
-    // 构建基础查询
-    const baseQuery = `
+    // 获取分页的文章数据
+    const result = await sql`
       SELECT 
         a.*,
         s.name as source_name,
         s.source_type
       FROM rss_articles a
       JOIN rss_sources s ON a.source_id = s.id
-      ${whereClause}
+      ORDER BY a.pub_date DESC
+      LIMIT ${Number(pageSize)}
+      OFFSET ${offset}
     `;
-
-    // 获取总数
-    const countResult = await sql.query(
-      `SELECT COUNT(*) FROM (${baseQuery}) as count_query`,
-      values
-    );
-    const total = parseInt(countResult.rows[0].count);
-
-    // 获取分页数据
-    const result = await sql.query(
-      `${baseQuery}
-       ORDER BY a.pub_date ${timeOrder === 'desc' ? 'DESC' : 'ASC'}
-       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-      [...values, Number(pageSize), offset]
-    );
 
     res.status(200).json({
       articles: result.rows,

@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { FaSort, FaSortUp, FaSortDown, FaCopy } from 'react-icons/fa';
 import type { Article } from '../types/article';
+import FilterPopover from './FilterPopover';
 
 interface Props {
   articles: Article[];
@@ -13,6 +15,13 @@ interface Props {
   onPageChange: (page: number) => void;
   onAddToSummary: (article: Article) => void;
   selectedArticleIds: number[];
+  onFilterChange: (filters: {
+    startDate?: Date;
+    endDate?: Date;
+    authors?: string[];
+    sources?: string[];
+    sourceTypes?: string[];
+  }) => void;
 }
 
 export default function ArticleList({
@@ -25,8 +34,29 @@ export default function ArticleList({
   onTimeOrderChange,
   onPageChange,
   onAddToSummary,
-  selectedArticleIds
+  selectedArticleIds,
+  onFilterChange
 }: Props) {
+  const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({});
+  const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+  const [selectedSources, setSelectedSources] = useState<string[]>([]);
+  const [selectedSourceTypes, setSelectedSourceTypes] = useState<string[]>([]);
+
+  // 获取所有可用的选项
+  const uniqueAuthors = Array.from(new Set(articles.map(a => a.author)));
+  const uniqueSources = Array.from(new Set(articles.map(a => a.source_name)));
+  const uniqueSourceTypes = Array.from(new Set(articles.map(a => a.source_type)));
+
+  useEffect(() => {
+    onFilterChange({
+      startDate: dateRange.start,
+      endDate: dateRange.end,
+      authors: selectedAuthors,
+      sources: selectedSources,
+      sourceTypes: selectedSourceTypes
+    });
+  }, [dateRange, selectedAuthors, selectedSources, selectedSourceTypes]);
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
