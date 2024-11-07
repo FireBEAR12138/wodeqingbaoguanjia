@@ -92,7 +92,7 @@ async function saveArticle(article: {
         (source_id, title, link, description, pub_date, author, ai_summary)
         VALUES 
         (${article.sourceId}, ${article.title}, ${article.link}, 
-         ${article.description}, ${article.pubDate}, ${article.author}, 
+         ${article.description}, ${article.pubDate.toISOString()}, ${article.author}, 
          ${article.aiSummary})
     `;
 } 
