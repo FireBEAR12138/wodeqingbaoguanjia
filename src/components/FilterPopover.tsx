@@ -8,8 +8,8 @@ interface FilterPopoverProps {
   title: string;
   options?: string[];
   selectedValues?: string[];
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: Date | null;
+  endDate?: Date | null;
   onDateChange?: (start: Date | null, end: Date | null) => void;
   onSelectionChange?: (values: string[]) => void;
 }
@@ -19,8 +19,8 @@ export default function FilterPopover({
   title,
   options = [],
   selectedValues = [],
-  startDate,
-  endDate,
+  startDate = null,
+  endDate = null,
   onDateChange,
   onSelectionChange
 }: FilterPopoverProps) {
@@ -70,18 +70,20 @@ export default function FilterPopover({
                   <label className="block text-sm text-gray-600">开始日期</label>
                   <DatePicker
                     selected={startDate}
-                    onChange={(date) => onDateChange?.(date, endDate)}
+                    onChange={(date: Date | null) => onDateChange?.(date, endDate)}
                     className="w-full border rounded p-2"
                     placeholderText="选择开始日期"
+                    isClearable
                   />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-600">结束日期</label>
                   <DatePicker
                     selected={endDate}
-                    onChange={(date) => onDateChange?.(startDate, date)}
+                    onChange={(date: Date | null) => onDateChange?.(startDate, date)}
                     className="w-full border rounded p-2"
                     placeholderText="选择结束日期"
+                    isClearable
                   />
                 </div>
               </div>
