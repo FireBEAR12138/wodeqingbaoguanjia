@@ -1,6 +1,6 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import Parser from 'rss-parser';
-import { pool } from '../db/connection';
+import { sql } from '../lib/db';
 import { RSSItem } from '../types/article';
 import { fetchTwitterFeed } from './twitterFetcher';
 
@@ -15,7 +15,7 @@ const bedrock = new BedrockRuntimeClient({
 export async function fetchAndProcessRSS() {
     const parser = new Parser<{items: RSSItem[]}>();
     
-    const { rows: sources } = await pool.query('SELECT * FROM rss_sources');
+    const { rows: sources } = await sql`SELECT * FROM rss_sources`;
     
     for (const source of sources) {
         try {
@@ -53,6 +53,13 @@ export async function fetchAndProcessRSS() {
     }
 }
 
+async function checkArticleExists(link: string): Promise<boolean> {
+    const result = await sql`
+        SELECT EXISTS(SELECT 1 FROM rss_articles WHERE link = ${link})
+    `;
+    return result.rows[0].exists;
+}
+
 async function generateAISummary(content: string): Promise<string> {
     const prompt = `请用中文简要总结以下内容（200字以内）：\n\n${content}`;
     
@@ -71,35 +78,21 @@ async function generateAISummary(content: string): Promise<string> {
     return result.content[0].text;
 }
 
-async function checkArticleExists(link: string): Promise<boolean> {
-    const { rows } = await pool.query(
-        'SELECT EXISTS(SELECT 1 FROM rss_articles WHERE link = $1)',
-        [link]
-    );
-    return rows[0].exists;
-}
-
 async function saveArticle(article: {
     sourceId: number;
     title: string;
     link: string;
     description: string;
     pubDate: Date;
-    author?: string;
+    author: string;
     aiSummary: string;
 }): Promise<void> {
-    await pool.query(
-        `INSERT INTO rss_articles 
-         (source_id, title, link, description, pub_date, author, ai_summary)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [
-            article.sourceId,
-            article.title,
-            article.link,
-            article.description,
-            article.pubDate,
-            article.author,
-            article.aiSummary
-        ]
-    );
+    await sql`
+        INSERT INTO rss_articles 
+        (source_id, title, link, description, pub_date, author, ai_summary)
+        VALUES 
+        (${article.sourceId}, ${article.title}, ${article.link}, 
+         ${article.description}, ${article.pubDate}, ${article.author}, 
+         ${article.aiSummary})
+    `;
 } 
