@@ -62,7 +62,7 @@ export default function FilterPopover({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 min-w-[250px]">
+        <div className="fixed transform -translate-x-1/2 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 min-w-[250px] z-50">
           <div className="p-3 border-b">
             <h3 className="font-medium">{title}</h3>
           </div>

@@ -187,9 +187,6 @@ export default function ArticleList({
                 </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                来源
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div className="flex items-center space-x-2">
                   <span>来源</span>
                   <FilterPopover
@@ -245,24 +242,26 @@ export default function ArticleList({
                 <td className="px-6 py-4 whitespace-nowrap">{article.source_name}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{article.source_type}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {selectedArticleIds.includes(article.id) ? (
-                    <span className="text-gray-500">已加入</span>
-                  ) : (
-                    <div className="space-x-2">
-                      <button
-                        onClick={() => onAddToSummary(article)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        加入AI总结
-                      </button>
-                      <button
-                        onClick={() => copyToClipboard(article.link)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        <FaCopy className="inline" />
-                      </button>
-                    </div>
-                  )}
+                  <div className="space-x-2">
+                    {selectedArticleIds.includes(article.id) ? (
+                      <span className="text-gray-500">已加入</span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => onAddToSummary(article)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          加入AI总结
+                        </button>
+                        <button
+                          onClick={() => copyToClipboard(article.link)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <FaCopy className="inline" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
