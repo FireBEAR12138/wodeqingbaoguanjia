@@ -222,14 +222,14 @@ export default function ArticleList({
                   <td className="px-6 py-4">
                     <div className="group relative">
                       <div className="line-clamp-3">{article.ai_summary}</div>
-                      <div className="hidden group-hover:block fixed transform -translate-x-1/2 left-1/2 mt-2 p-4 bg-white shadow-xl rounded-lg border border-gray-200 max-w-2xl w-full z-50">
+                      <div className="hidden group-hover:block absolute left-0 mt-2 p-4 bg-white shadow-xl rounded-lg border border-gray-200 w-[500px] z-50">
                         <div className="relative">
                           <div className="max-h-96 overflow-y-auto">
                             {article.ai_summary}
                           </div>
                           <button
                             onClick={() => copyToClipboard(article.ai_summary)}
-                            className="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700 bg-white rounded-full shadow-sm"
+                            className="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-700 bg-white rounded-full shadow-sm"
                           >
                             <FaCopy />
                           </button>
