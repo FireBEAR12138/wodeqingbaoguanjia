@@ -48,6 +48,13 @@ export async function fetchAndProcessRSS() {
                     aiSummary
                 });
             }
+
+            // 更新源的最后更新时间
+            await sql`
+                UPDATE rss_sources 
+                SET last_update = CURRENT_TIMESTAMP 
+                WHERE id = ${source.id}
+            `;
         } catch (error) {
             console.error(`Error processing RSS source ${source.name}:`, error);
         }
