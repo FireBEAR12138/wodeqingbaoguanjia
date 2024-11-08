@@ -3,10 +3,10 @@ CREATE TABLE IF NOT EXISTS rss_sources (
     id SERIAL PRIMARY KEY,
     category VARCHAR(50) NOT NULL,
     name VARCHAR(100) NOT NULL,
-    source_type VARCHAR(20) NOT NULL, -- 'website' 或 'twitter'
+    source_type VARCHAR(20) NOT NULL,
     url TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_update TIMESTAMP WITH TIME ZONE
+    last_update TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- RSS文章表
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS rss_articles (
     author VARCHAR(100),
     ai_summary TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(link) -- 防止重复文章
+    UNIQUE(link)
 );
 
 -- 添加系统设置表

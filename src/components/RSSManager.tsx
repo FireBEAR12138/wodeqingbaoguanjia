@@ -48,6 +48,7 @@ export default function RSSManager({ onClose }: Props) {
       // 逐个处理每个源
       for (const source of sources) {
         try {
+          console.log(`Updating source: ${source.name}`);
           const response = await fetch(`/api/update-rss?sourceId=${source.id}`, {
             method: 'POST',
             headers: {
@@ -56,8 +57,11 @@ export default function RSSManager({ onClose }: Props) {
           });
 
           if (!response.ok) {
-            console.error(`Failed to update source ${source.name}`);
+            throw new Error(`Failed to update source ${source.name}`);
           }
+
+          const result = await response.json();
+          console.log(`Update result for ${source.name}:`, result);
         } catch (error) {
           console.error(`Error updating source ${source.name}:`, error);
         }
@@ -128,8 +132,16 @@ export default function RSSManager({ onClose }: Props) {
             disabled={loading}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
           >
-            <FaPlay />
-            {loading ? '更新中...' : '手动更新'}
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>更新中...</span>
+              </>
+            ) : (
+              <>
+                <span>手动更新</span>
+              </>
+            )}
           </button>
           <button
             onClick={() => setShowAddModal(true)}
