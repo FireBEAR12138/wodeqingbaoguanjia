@@ -38,9 +38,16 @@ export default async function handler(
         return res.status(200).json(updated.rows[0]);
 
       case 'DELETE':
-        const { id: deleteId } = req.query;
+        const deleteId = Array.isArray(req.query.id) 
+          ? req.query.id[0] 
+          : req.query.id;
+        
+        if (!deleteId) {
+          return res.status(400).json({ error: 'ID is required' });
+        }
+        
         await sql`
-          DELETE FROM rss_sources WHERE id = ${deleteId}
+          DELETE FROM rss_sources WHERE id = ${Number(deleteId)}
         `;
         return res.status(204).end();
 
