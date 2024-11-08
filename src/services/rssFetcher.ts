@@ -16,25 +16,38 @@ const RSSHUB_BASE_URL = 'https://rsshubservice-be5b67e615d6.herokuapp.com';
 export async function fetchAndProcessRSS() {
     const parser = new Parser<{items: RSSItem[]}>();
     
+    console.log('Fetching RSS sources from database...');
     const { rows: sources } = await sql`SELECT * FROM rss_sources`;
+    console.log(`Found ${sources.length} RSS sources`);
     
     for (const source of sources) {
         try {
+            console.log(`Processing source: ${source.name} (${source.url})`);
+            
             // 处理 URL，如果是 Twitter 源，使用 RSSHub URL
             const feedUrl = source.source_type === 'twitter' 
                 ? `${RSSHUB_BASE_URL}${source.url}`
                 : source.url;
-
-            const feed = await parser.parseURL(feedUrl);
             
+            console.log(`Fetching feed from: ${feedUrl}`);
+            const feed = await parser.parseURL(feedUrl);
+            console.log(`Fetched ${feed.items.length} items from feed`);
+            
+            let newItemsCount = 0;
             for (const item of feed.items) {
-                if (!item.link) continue;
+                if (!item.link) {
+                    console.log('Skipping item without link');
+                    continue;
+                }
                 
                 // 检查文章是否已存在
                 const exists = await checkArticleExists(item.link);
-                if (exists) continue;
+                if (exists) {
+                    console.log(`Article already exists: ${item.link}`);
+                    continue;
+                }
                 
-                // 生成AI摘要
+                console.log(`Generating AI summary for: ${item.title}`);
                 const aiSummary = await generateAISummary(item.content || item.description || '');
                 
                 // 存储文章
@@ -47,7 +60,10 @@ export async function fetchAndProcessRSS() {
                     author: item.author || '未知作者',
                     aiSummary
                 });
+                newItemsCount++;
             }
+
+            console.log(`Added ${newItemsCount} new items from ${source.name}`);
 
             // 更新源的最后更新时间
             await sql`
@@ -55,6 +71,7 @@ export async function fetchAndProcessRSS() {
                 SET last_update = CURRENT_TIMESTAMP 
                 WHERE id = ${source.id}
             `;
+            
         } catch (error) {
             console.error(`Error processing RSS source ${source.name}:`, error);
         }

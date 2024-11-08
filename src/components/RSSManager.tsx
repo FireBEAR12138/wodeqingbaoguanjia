@@ -40,11 +40,24 @@ export default function RSSManager({ onClose }: Props) {
   const handleManualUpdate = async () => {
     try {
       setLoading(true);
-      await fetch('/api/update-rss', { method: 'POST' });
-      alert('RSS更新已触发');
+      const response = await fetch('/api/update-rss', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Update failed');
+      }
+
+      const data = await response.json();
+      alert('RSS更新成功完成');
+      // 刷新源列表以更新最后更新时间
+      fetchSources();
     } catch (error) {
       console.error('Failed to trigger RSS update:', error);
-      alert('更新失败');
+      alert('更新失败，请查看控制台了解详情');
     } finally {
       setLoading(false);
     }
