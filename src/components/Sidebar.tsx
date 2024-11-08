@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import Image from 'next/image';
 import { FaNewspaper, FaRss } from 'react-icons/fa';
 
 interface Props {
@@ -15,7 +16,17 @@ export default function Sidebar({ currentPage, onPageChange }: Props) {
   return (
     <div className="w-64 bg-white shadow-lg h-screen fixed left-0 top-0">
       <div className="p-4">
-        <h1 className="text-xl font-bold mb-8">RSS阅读器</h1>
+        <div className="flex items-center gap-3 mb-8">
+          <Image
+            src="/logo.png"
+            alt="我的情报管家"
+            width={40}
+            height={40}
+            className="rounded-lg"
+          />
+          <h1 className="text-xl font-bold">我的情报管家</h1>
+        </div>
+
         <nav className="space-y-2">
           {menuItems.map(item => (
             <button

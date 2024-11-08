@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Article } from '../types/article';
 import Sidebar from '../components/Sidebar';
 import ArticleList from '../components/ArticleList';
@@ -14,6 +14,64 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [timeOrder, setTimeOrder] = useState<'asc' | 'desc'>('desc');
+  const [filters, setFilters] = useState<{
+    startDate?: Date | null;
+    endDate?: Date | null;
+    authors?: string[];
+    sources?: string[];
+    sourceTypes?: string[];
+  }>({});
+
+  const fetchArticles = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: '10',
+        timeOrder
+      });
+
+      if (filters.startDate) {
+        params.append('startDate', filters.startDate.toISOString());
+      }
+      if (filters.endDate) {
+        params.append('endDate', filters.endDate.toISOString());
+      }
+      if (filters.authors?.length) {
+        params.append('authors', filters.authors.join(','));
+      }
+      if (filters.sources?.length) {
+        params.append('sources', filters.sources.join(','));
+      }
+      if (filters.sourceTypes?.length) {
+        params.append('sourceTypes', filters.sourceTypes.join(','));
+      }
+
+      const response = await fetch(`/api/articles?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch articles');
+      
+      const data = await response.json();
+      setArticles(data.articles);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取文章失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentPage === 'all') {
+      fetchArticles();
+    }
+  }, [currentPage, page, timeOrder, filters]);
+
+  const handleFilterChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    setPage(1);
+  };
   
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -36,7 +94,7 @@ export default function Home() {
                   setSelectedArticles([...selectedArticles, article]);
                 }}
                 selectedArticleIds={selectedArticles.map(a => a.id)}
-                onFilterChange={() => {}}
+                onFilterChange={handleFilterChange}
               />
             </div>
             <AISummaryPanel
