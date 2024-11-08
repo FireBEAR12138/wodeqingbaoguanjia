@@ -41,23 +41,35 @@ export default function ArticleList({
     start: null,
     end: null
   });
-  const [tempDateRange, setTempDateRange] = useState<{ start: Date | null; end: Date | null }>({
-    start: null,
-    end: null
-  });
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selectedSourceTypes, setSelectedSourceTypes] = useState<string[]>([]);
   
-  // 添加临时筛选状态
-  const [tempAuthors, setTempAuthors] = useState<string[]>([]);
-  const [tempSources, setTempSources] = useState<string[]>([]);
-  const [tempSourceTypes, setTempSourceTypes] = useState<string[]>([]);
+  // 添加筛选选项状态
+  const [filterOptions, setFilterOptions] = useState<{
+    authors: string[];
+    sources: string[];
+    sourceTypes: string[];
+  }>({
+    authors: [],
+    sources: [],
+    sourceTypes: []
+  });
 
-  // 获取所有可用的选项
-  const uniqueAuthors = Array.from(new Set(articles.map(a => a.author)));
-  const uniqueSources = Array.from(new Set(articles.map(a => a.source_name)));
-  const uniqueSourceTypes = Array.from(new Set(articles.map(a => a.source_type)));
+  // 获取筛选选项
+  useEffect(() => {
+    async function fetchFilterOptions() {
+      try {
+        const response = await fetch('/api/filter-options');
+        if (!response.ok) throw new Error('Failed to fetch filter options');
+        const data = await response.json();
+        setFilterOptions(data);
+      } catch (error) {
+        console.error('Error fetching filter options:', error);
+      }
+    }
+    fetchFilterOptions();
+  }, []);
 
   useEffect(() => {
     onFilterChange({
@@ -168,9 +180,9 @@ export default function ArticleList({
                     <FilterPopover
                       type="multiple"
                       title="筛选作者"
-                      options={uniqueAuthors}
-                      selectedValues={tempAuthors}
-                      onSelectionChange={setTempAuthors}
+                      options={filterOptions.authors}
+                      selectedValues={selectedAuthors}
+                      onSelectionChange={setSelectedAuthors}
                       onConfirm={() => handleFilterConfirm('authors')}
                     />
                   </div>
@@ -181,9 +193,9 @@ export default function ArticleList({
                     <FilterPopover
                       type="multiple"
                       title="筛选订阅源"
-                      options={uniqueSources}
-                      selectedValues={tempSources}
-                      onSelectionChange={setTempSources}
+                      options={filterOptions.sources}
+                      selectedValues={selectedSources}
+                      onSelectionChange={setSelectedSources}
                       onConfirm={() => handleFilterConfirm('sources')}
                     />
                   </div>
@@ -194,9 +206,9 @@ export default function ArticleList({
                     <FilterPopover
                       type="multiple"
                       title="筛选来源"
-                      options={uniqueSourceTypes}
-                      selectedValues={tempSourceTypes}
-                      onSelectionChange={setTempSourceTypes}
+                      options={filterOptions.sourceTypes}
+                      selectedValues={selectedSourceTypes}
+                      onSelectionChange={setSelectedSourceTypes}
                       onConfirm={() => handleFilterConfirm('sourceTypes')}
                     />
                   </div>
