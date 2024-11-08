@@ -13,11 +13,13 @@ const bedrock = new BedrockRuntimeClient({
 
 const RSSHUB_BASE_URL = 'https://rsshubservice-be5b67e615d6.herokuapp.com';
 
-export async function fetchAndProcessRSS() {
+export async function fetchAndProcessRSS(sourceId?: number) {
     const parser = new Parser<{items: RSSItem[]}>();
     
     console.log('Fetching RSS sources from database...');
-    const { rows: sources } = await sql`SELECT * FROM rss_sources`;
+    const { rows: sources } = sourceId 
+        ? await sql`SELECT * FROM rss_sources WHERE id = ${sourceId}`
+        : await sql`SELECT * FROM rss_sources`;
     console.log(`Found ${sources.length} RSS sources`);
     
     for (const source of sources) {

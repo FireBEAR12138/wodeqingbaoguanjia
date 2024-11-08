@@ -40,18 +40,29 @@ export default function RSSManager({ onClose }: Props) {
   const handleManualUpdate = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/update-rss', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      
+      // 获取所有源
+      const sourcesResponse = await fetch('/api/rss-sources');
+      const sources = await sourcesResponse.json();
+      
+      // 逐个处理每个源
+      for (const source of sources) {
+        try {
+          const response = await fetch(`/api/update-rss?sourceId=${source.id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
 
-      if (!response.ok) {
-        throw new Error('Update failed');
+          if (!response.ok) {
+            console.error(`Failed to update source ${source.name}`);
+          }
+        } catch (error) {
+          console.error(`Error updating source ${source.name}:`, error);
+        }
       }
 
-      const data = await response.json();
       alert('RSS更新成功完成');
       // 刷新源列表以更新最后更新时间
       fetchSources();

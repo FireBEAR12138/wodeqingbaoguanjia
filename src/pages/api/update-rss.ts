@@ -1,6 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchAndProcessRSS } from '../../services/rssFetcher';
 
+export const config = {
+  maxDuration: 300 // 设置最大执行时间为300秒
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -12,7 +16,12 @@ export default async function handler(
 
   try {
     console.log('Starting manual RSS update...');
-    await fetchAndProcessRSS();
+    
+    // 使用 sourceId 参数来支持分批处理
+    const sourceId = req.query.sourceId ? Number(req.query.sourceId) : undefined;
+    
+    await fetchAndProcessRSS(sourceId);
+    
     console.log('RSS update completed');
     res.status(200).json({ message: 'RSS update completed successfully' });
   } catch (error) {
