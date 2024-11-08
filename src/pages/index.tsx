@@ -74,13 +74,13 @@ export default function Home() {
   };
   
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen max-h-screen overflow-hidden bg-gray-100">
       <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
       
       <main className="flex-1 ml-64">
         {currentPage === 'all' ? (
-          <div className="flex">
-            <div className="flex-1 p-6">
+          <div className="flex h-screen">
+            <div className="flex-1 p-6 flex flex-col">
               <ArticleList
                 articles={articles}
                 loading={loading}

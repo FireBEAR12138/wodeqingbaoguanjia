@@ -11,8 +11,6 @@ const bedrock = new BedrockRuntimeClient({
     }
 });
 
-const RSSHUB_BASE_URL = 'https://rsshubservice-be5b67e615d6.herokuapp.com';
-
 export async function fetchAndProcessRSS(sourceId?: number) {
     const parser = new Parser<{items: RSSItem[]}>();
     
@@ -26,10 +24,8 @@ export async function fetchAndProcessRSS(sourceId?: number) {
         try {
             console.log(`Processing source: ${source.name} (${source.url})`);
             
-            // 处理 URL，如果是 Twitter 源，使用 RSSHub URL
-            const feedUrl = source.source_type === 'twitter' 
-                ? `${RSSHUB_BASE_URL}${source.url}`
-                : source.url;
+            // 直接使用源 URL，不需要额外拼接
+            const feedUrl = source.url;
             
             console.log(`Fetching feed from: ${feedUrl}`);
             const feed = await parser.parseURL(feedUrl);
