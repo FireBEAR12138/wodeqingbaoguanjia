@@ -46,7 +46,10 @@ export async function fetchAndProcessRSS(sourceId?: number) {
                 }
                 
                 console.log(`Generating AI summary for: ${item.title}`);
-                const aiSummary = await generateAISummary(item.content || item.description || '');
+                const aiSummary = await generateAISummary(
+                    item.content || item.description || '',
+                    item.title || '无标题'
+                );
                 
                 // 存储文章
                 await saveArticle({
@@ -83,8 +86,8 @@ async function checkArticleExists(link: string): Promise<boolean> {
     return result.rows[0].exists;
 }
 
-async function generateAISummary(content: string): Promise<string> {
-    const prompt = `请用中文简要总结以下内容（200字以内）：\n\n${content}`;
+async function generateAISummary(content: string, title: string): Promise<string> {
+    const prompt = `请用中文简要总结以下内容（200字以内）：\n\n标题：${title}\n\n内容：${content}\noutput:`;
     
     const response = await bedrock.send(new InvokeModelCommand({
         modelId: process.env.MODEL_ID,
