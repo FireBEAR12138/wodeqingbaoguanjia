@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchAndProcessRSS } from '../../services/rssFetcher';
 
 export const config = {
-  maxDuration: 300 // 设置最大执行时间为300秒
+  maxDuration: 60 // 设置最大执行时间为60秒（Hobby计划的最大值）
 };
 
 export default async function handler(
