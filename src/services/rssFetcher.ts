@@ -2,7 +2,6 @@ import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedroc
 import Parser from 'rss-parser';
 import { sql } from '../lib/db';
 import { RSSItem } from '../types/article';
-import { fetchTwitterFeed } from './twitterFetcher';
 
 const bedrock = new BedrockRuntimeClient({
     region: process.env.AWS_REGION,
@@ -12,6 +11,8 @@ const bedrock = new BedrockRuntimeClient({
     }
 });
 
+const RSSHUB_BASE_URL = 'https://rsshubservice-be5b67e615d6.herokuapp.com';
+
 export async function fetchAndProcessRSS() {
     const parser = new Parser<{items: RSSItem[]}>();
     
@@ -19,12 +20,12 @@ export async function fetchAndProcessRSS() {
     
     for (const source of sources) {
         try {
-            let feed;
-            if (source.source_type === 'twitter') {
-                feed = await fetchTwitterFeed(source.url);
-            } else {
-                feed = await parser.parseURL(source.url);
-            }
+            // 处理 URL，如果是 Twitter 源，使用 RSSHub URL
+            const feedUrl = source.source_type === 'twitter' 
+                ? `${RSSHUB_BASE_URL}${source.url}`
+                : source.url;
+
+            const feed = await parser.parseURL(feedUrl);
             
             for (const item of feed.items) {
                 if (!item.link) continue;

@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS rss_sources (
     name VARCHAR(100) NOT NULL,
     source_type VARCHAR(20) NOT NULL, -- 'website' 或 'twitter'
     url TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_update TIMESTAMP WITH TIME ZONE
 );
 
 -- RSS文章表
@@ -20,6 +21,13 @@ CREATE TABLE IF NOT EXISTS rss_articles (
     ai_summary TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(link) -- 防止重复文章
+);
+
+-- 添加系统设置表
+CREATE TABLE IF NOT EXISTS system_settings (
+    key VARCHAR(50) PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 插入一些测试数据
