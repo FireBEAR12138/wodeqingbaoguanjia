@@ -37,6 +37,7 @@ export default function ArticleList({
   selectedArticleIds,
   onFilterChange
 }: Props) {
+  // 永久状态
   const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
     start: null,
     end: null
@@ -44,8 +45,17 @@ export default function ArticleList({
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selectedSourceTypes, setSelectedSourceTypes] = useState<string[]>([]);
+
+  // 临时状态（用于筛选确认前）
+  const [tempDateRange, setTempDateRange] = useState<{ start: Date | null; end: Date | null }>({
+    start: null,
+    end: null
+  });
+  const [tempAuthors, setTempAuthors] = useState<string[]>([]);
+  const [tempSources, setTempSources] = useState<string[]>([]);
+  const [tempSourceTypes, setTempSourceTypes] = useState<string[]>([]);
   
-  // 添加筛选选项状态
+  // 筛选选项
   const [filterOptions, setFilterOptions] = useState<{
     authors: string[];
     sources: string[];
@@ -181,8 +191,8 @@ export default function ArticleList({
                       type="multiple"
                       title="筛选作者"
                       options={filterOptions.authors}
-                      selectedValues={selectedAuthors}
-                      onSelectionChange={setSelectedAuthors}
+                      selectedValues={tempAuthors}
+                      onSelectionChange={setTempAuthors}
                       onConfirm={() => handleFilterConfirm('authors')}
                     />
                   </div>
@@ -194,8 +204,8 @@ export default function ArticleList({
                       type="multiple"
                       title="筛选订阅源"
                       options={filterOptions.sources}
-                      selectedValues={selectedSources}
-                      onSelectionChange={setSelectedSources}
+                      selectedValues={tempSources}
+                      onSelectionChange={setTempSources}
                       onConfirm={() => handleFilterConfirm('sources')}
                     />
                   </div>
@@ -207,8 +217,8 @@ export default function ArticleList({
                       type="multiple"
                       title="筛选来源"
                       options={filterOptions.sourceTypes}
-                      selectedValues={selectedSourceTypes}
-                      onSelectionChange={setSelectedSourceTypes}
+                      selectedValues={tempSourceTypes}
+                      onSelectionChange={setTempSourceTypes}
                       onConfirm={() => handleFilterConfirm('sourceTypes')}
                     />
                   </div>
