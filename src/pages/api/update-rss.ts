@@ -18,12 +18,11 @@ export default async function handler(
   try {
     console.log('Starting RSS update...');
     
-    // 获取所有源
+    // 获取所有源，不再使用 LIMIT 1
     const { rows: sources } = await sql`
       SELECT id, name, url 
       FROM rss_sources 
       ORDER BY id
-      LIMIT 1
     `;
 
     if (sources.length === 0) {
@@ -31,29 +30,36 @@ export default async function handler(
       return res.status(200).json({ message: 'No sources found' });
     }
 
-    // 处理单个源
-    const source = sources[0];
-    console.log(`Processing source: ${source.name} (${source.url})`);
-    await fetchAndProcessRSS(source.id);
+    console.log(`Found ${sources.length} sources to process`);
 
-    // 触发下一个源的更新
-    try {
-      const baseUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : 'http://localhost:3000';
-      
-      // 异步触发下一次更新，不等待响应
-      fetch(`${baseUrl}/api/update-rss`, {
-        method: 'GET'
-      }).catch(console.error);
-    } catch (error) {
-      console.error('Error triggering next update:', error);
+    // 处理第一个源
+    const currentSource = sources[0];
+    console.log(`Processing source: ${currentSource.name} (${currentSource.url})`);
+    await fetchAndProcessRSS(currentSource.id);
+
+    // 如果还有其他源，触发下一个更新
+    if (sources.length > 1) {
+      try {
+        const baseUrl = process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}` 
+          : 'http://localhost:3000';
+        
+        console.log(`Triggering update for remaining ${sources.length - 1} sources`);
+        
+        // 异步触发下一次更新，不等待响应
+        fetch(`${baseUrl}/api/update-rss`, {
+          method: 'GET'
+        }).catch(console.error);
+      } catch (error) {
+        console.error('Error triggering next update:', error);
+      }
     }
 
-    console.log(`Completed updating source: ${source.name}`);
+    console.log(`Completed updating source: ${currentSource.name}`);
     res.status(200).json({ 
       message: 'RSS update completed successfully',
-      updatedSource: source.name
+      updatedSource: currentSource.name,
+      remainingSources: sources.length - 1
     });
   } catch (error) {
     console.error('Error updating RSS:', error);

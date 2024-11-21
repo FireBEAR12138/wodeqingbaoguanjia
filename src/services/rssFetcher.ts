@@ -24,7 +24,6 @@ export async function fetchAndProcessRSS(sourceId?: number) {
         try {
             console.log(`Processing source: ${source.name} (${source.url})`);
             
-            // 直接使用源 URL，不需要额外拼接
             const feedUrl = source.url;
             
             console.log(`Fetching feed from: ${feedUrl}`);
@@ -65,13 +64,6 @@ export async function fetchAndProcessRSS(sourceId?: number) {
             }
 
             console.log(`Added ${newItemsCount} new items from ${source.name}`);
-
-            // 更新源的最后更新时间
-            await sql`
-                UPDATE rss_sources 
-                SET last_update = CURRENT_TIMESTAMP 
-                WHERE id = ${source.id}
-            `;
             
         } catch (error) {
             console.error(`Error processing RSS source ${source.name}:`, error);
