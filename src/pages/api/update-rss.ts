@@ -17,40 +17,46 @@ export default async function handler(
 
   try {
     console.log('Starting RSS update...');
-    console.log('Request method:', req.method);
     
-    // 获取所有源
-    const { rows: sources } = await sql`SELECT id FROM rss_sources ORDER BY id`;
-    console.log(`Found ${sources.length} sources to update`);
+    // 获取所有需要更新的源
+    const { rows: sources } = await sql`
+      SELECT id, name, url 
+      FROM rss_sources 
+      WHERE last_update IS NULL 
+         OR last_update < NOW() - INTERVAL '1 hour'
+      ORDER BY last_update ASC NULLS FIRST 
+      LIMIT 1
+    `;
 
-    // 处理第一个源
-    if (sources.length > 0) {
-      const firstSource = sources[0];
-      console.log(`Processing source ID: ${firstSource.id}`);
-      await fetchAndProcessRSS(firstSource.id);
-
-      // 如果还有其他源，触发下一个源的更新
-      if (sources.length > 1) {
-        const nextSourceId = sources[1].id;
-        console.log(`Triggering update for next source: ${nextSourceId}`);
-        
-        // 使用 fetch 触发下一个源的更新
-        try {
-          const baseUrl = process.env.VERCEL_URL 
-            ? `https://${process.env.VERCEL_URL}` 
-            : 'http://localhost:3000';
-          
-          await fetch(`${baseUrl}/api/update-rss?sourceId=${nextSourceId}`, {
-            method: 'GET'
-          });
-        } catch (error) {
-          console.error('Error triggering next source update:', error);
-        }
-      }
+    if (sources.length === 0) {
+      console.log('No sources need updating');
+      return res.status(200).json({ message: 'No sources need updating' });
     }
 
-    console.log('Current batch completed');
-    res.status(200).json({ message: 'RSS update batch completed successfully' });
+    // 处理单个源
+    const source = sources[0];
+    console.log(`Processing source: ${source.name} (${source.url})`);
+    await fetchAndProcessRSS(source.id);
+
+    // 更新完成后，触发下一个更新任务
+    try {
+      const baseUrl = process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}` 
+        : 'http://localhost:3000';
+      
+      // 异步触发下一次更新，不等待响应
+      fetch(`${baseUrl}/api/update-rss`, {
+        method: 'GET'
+      }).catch(console.error);
+    } catch (error) {
+      console.error('Error triggering next update:', error);
+    }
+
+    console.log(`Completed updating source: ${source.name}`);
+    res.status(200).json({ 
+      message: 'RSS update completed successfully',
+      updatedSource: source.name
+    });
   } catch (error) {
     console.error('Error updating RSS:', error);
     res.status(500).json({ error: 'Failed to update RSS feeds' });
