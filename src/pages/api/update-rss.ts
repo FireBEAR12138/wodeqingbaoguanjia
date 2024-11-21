@@ -18,19 +18,17 @@ export default async function handler(
   try {
     console.log('Starting RSS update...');
     
-    // 获取所有需要更新的源
+    // 获取所有源
     const { rows: sources } = await sql`
       SELECT id, name, url 
       FROM rss_sources 
-      WHERE last_update IS NULL 
-         OR last_update < NOW() - INTERVAL '1 hour'
-      ORDER BY last_update ASC NULLS FIRST 
+      ORDER BY id
       LIMIT 1
     `;
 
     if (sources.length === 0) {
-      console.log('No sources need updating');
-      return res.status(200).json({ message: 'No sources need updating' });
+      console.log('No sources found');
+      return res.status(200).json({ message: 'No sources found' });
     }
 
     // 处理单个源
@@ -38,7 +36,7 @@ export default async function handler(
     console.log(`Processing source: ${source.name} (${source.url})`);
     await fetchAndProcessRSS(source.id);
 
-    // 更新完成后，触发下一个更新任务
+    // 触发下一个源的更新
     try {
       const baseUrl = process.env.VERCEL_URL 
         ? `https://${process.env.VERCEL_URL}` 
