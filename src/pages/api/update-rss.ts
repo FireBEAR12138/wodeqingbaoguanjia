@@ -18,7 +18,11 @@ export default async function handler(
   try {
     console.log('Starting RSS update...');
     
-    // 获取所有源，不再使用 LIMIT 1
+    // 获取开始位置
+    const startIndex = parseInt(req.query.startIndex as string) || 0;
+    console.log(`Starting from index: ${startIndex}`);
+
+    // 获取所有源
     const { rows: sources } = await sql`
       SELECT id, name, url 
       FROM rss_sources 
@@ -30,36 +34,46 @@ export default async function handler(
       return res.status(200).json({ message: 'No sources found' });
     }
 
-    console.log(`Found ${sources.length} sources to process`);
+    if (startIndex >= sources.length) {
+      console.log('All sources processed');
+      return res.status(200).json({ message: 'All sources processed' });
+    }
 
-    // 处理第一个源
-    const currentSource = sources[0];
+    console.log(`Found ${sources.length} total sources, processing source ${startIndex + 1} of ${sources.length}`);
+
+    // 处理当前源
+    const currentSource = sources[startIndex];
     console.log(`Processing source: ${currentSource.name} (${currentSource.url})`);
     await fetchAndProcessRSS(currentSource.id);
 
     // 如果还有其他源，触发下一个更新
-    if (sources.length > 1) {
+    if (startIndex + 1 < sources.length) {
       try {
         const baseUrl = process.env.VERCEL_URL 
           ? `https://${process.env.VERCEL_URL}` 
           : 'http://localhost:3000';
         
-        console.log(`Triggering update for remaining ${sources.length - 1} sources`);
+        const nextIndex = startIndex + 1;
+        console.log(`Triggering update for source ${nextIndex + 1} of ${sources.length}`);
         
-        // 异步触发下一次更新，不等待响应
-        fetch(`${baseUrl}/api/update-rss`, {
+        // 异步触发下一次更新，包含下一个索引
+        fetch(`${baseUrl}/api/update-rss?startIndex=${nextIndex}`, {
           method: 'GET'
         }).catch(console.error);
       } catch (error) {
         console.error('Error triggering next update:', error);
       }
+    } else {
+      console.log('All sources have been processed');
     }
 
     console.log(`Completed updating source: ${currentSource.name}`);
     res.status(200).json({ 
       message: 'RSS update completed successfully',
       updatedSource: currentSource.name,
-      remainingSources: sources.length - 1
+      currentIndex: startIndex,
+      totalSources: sources.length,
+      remainingSources: sources.length - (startIndex + 1)
     });
   } catch (error) {
     console.error('Error updating RSS:', error);
