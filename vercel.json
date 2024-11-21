@@ -9,7 +9,7 @@
   "crons": [
     {
       "path": "/api/update-rss",
-      "schedule": "26 8 * * *"
+      "schedule": "0 0 * * *"
     }
   ],
   "routes": [
@@ -18,5 +18,8 @@
       "methods": ["GET", "POST"],
       "dest": "/api/update-rss"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 } 
