@@ -5,9 +5,12 @@ CREATE TABLE IF NOT EXISTS rss_sources (
     name VARCHAR(100) NOT NULL,
     source_type VARCHAR(20) NOT NULL,
     url TEXT NOT NULL,
-    last_update TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 添加 last_update 列
+ALTER TABLE rss_sources 
+ADD COLUMN IF NOT EXISTS last_update TIMESTAMP WITH TIME ZONE;
 
 -- RSS文章表
 CREATE TABLE IF NOT EXISTS rss_articles (

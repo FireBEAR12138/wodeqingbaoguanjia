@@ -21,12 +21,18 @@ export default async function handler(
     
     const sourceId = req.query.sourceId ? Number(req.query.sourceId) : undefined;
     
-    await fetchAndProcessRSS(sourceId);
+    const result = await fetchAndProcessRSS(sourceId);
     
-    console.log('RSS update completed');
-    res.status(200).json({ message: 'RSS update completed successfully' });
+    console.log('RSS update completed:', result);
+    res.status(200).json({ 
+      message: 'RSS update completed successfully',
+      ...result
+    });
   } catch (error) {
     console.error('Error updating RSS:', error);
-    res.status(500).json({ error: 'Failed to update RSS feeds' });
+    res.status(500).json({ 
+      error: 'Failed to update RSS feeds',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 } 

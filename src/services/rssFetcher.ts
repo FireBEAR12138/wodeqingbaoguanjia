@@ -11,72 +11,117 @@ const bedrock = new BedrockRuntimeClient({
     }
 });
 
+// 添加重试机制
+async function retry<T>(
+    fn: () => Promise<T>,
+    retries = 3,
+    delay = 1000
+): Promise<T> {
+    try {
+        return await fn();
+    } catch (error) {
+        if (retries === 0) throw error;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return retry(fn, retries - 1, delay * 2);
+    }
+}
+
+// 处理单个文章
+async function processArticle(
+    item: RSSItem,
+    sourceId: number,
+    sourceName: string
+): Promise<boolean> {
+    try {
+        if (!item.link) {
+            console.log('Skipping item without link');
+            return false;
+        }
+
+        const exists = await checkArticleExists(item.link);
+        if (exists) {
+            console.log(`Article already exists: ${item.link}`);
+            return false;
+        }
+
+        console.log(`Generating AI summary for: ${item.title}`);
+        const aiSummary = await retry(() => 
+            generateAISummary(
+                item.content || item.description || '',
+                item.title || '无标题'
+            )
+        );
+
+        await saveArticle({
+            sourceId,
+            title: item.title || '无标题',
+            link: item.link,
+            description: item.content || item.description || '',
+            pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
+            author: item.author || '未知作者',
+            aiSummary
+        });
+
+        return true;
+    } catch (error) {
+        console.error(`Error processing article ${item.title}:`, error);
+        return false;
+    }
+}
+
+// 处理单个源
+async function processSource(source: any): Promise<number> {
+    try {
+        console.log(`Processing source: ${source.name} (${source.url})`);
+        const parser = new Parser<{items: RSSItem[]}>();
+
+        const feed = await retry(() => parser.parseURL(source.url));
+        console.log(`Fetched ${feed.items.length} items from feed`);
+
+        let newItemsCount = 0;
+        const batchSize = 5; // 每批处理5篇文章
+
+        for (let i = 0; i < feed.items.length; i += batchSize) {
+            const batch = feed.items.slice(i, i + batchSize);
+            const results = await Promise.all(
+                batch.map(item => processArticle(item, source.id, source.name))
+            );
+            newItemsCount += results.filter(Boolean).length;
+        }
+
+        // 更新源的最后更新时间
+        await sql`
+            UPDATE rss_sources 
+            SET last_update = CURRENT_TIMESTAMP 
+            WHERE id = ${source.id}
+        `;
+
+        return newItemsCount;
+    } catch (error) {
+        console.error(`Error processing source ${source.name}:`, error);
+        return 0;
+    }
+}
+
 export async function fetchAndProcessRSS(sourceId?: number) {
-    const parser = new Parser<{items: RSSItem[]}>();
-    
     console.log('Fetching RSS sources from database...');
     const { rows: sources } = sourceId 
         ? await sql`SELECT * FROM rss_sources WHERE id = ${sourceId}`
         : await sql`SELECT * FROM rss_sources`;
     console.log(`Found ${sources.length} RSS sources`);
-    
+
+    let totalNewItems = 0;
     for (const source of sources) {
         try {
-            console.log(`Processing source: ${source.name} (${source.url})`);
-            
-            // 直接使用源 URL，不需要额外拼接
-            const feedUrl = source.url;
-            
-            console.log(`Fetching feed from: ${feedUrl}`);
-            const feed = await parser.parseURL(feedUrl);
-            console.log(`Fetched ${feed.items.length} items from feed`);
-            
-            let newItemsCount = 0;
-            for (const item of feed.items) {
-                if (!item.link) {
-                    console.log('Skipping item without link');
-                    continue;
-                }
-                
-                // 检查文章是否已存在
-                const exists = await checkArticleExists(item.link);
-                if (exists) {
-                    console.log(`Article already exists: ${item.link}`);
-                    continue;
-                }
-                
-                console.log(`Generating AI summary for: ${item.title}`);
-                const aiSummary = await generateAISummary(
-                    item.content || item.description || '',
-                    item.title || '无标题'
-                );
-                
-                // 存储文章
-                await saveArticle({
-                    sourceId: source.id,
-                    title: item.title || '无标题',
-                    link: item.link,
-                    description: item.content || item.description || '',
-                    pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
-                    author: item.author || '未知作者',
-                    aiSummary
-                });
-                newItemsCount++;
-            }
-
-            console.log(`Added ${newItemsCount} new items from ${source.name}`);
-
-            // 更新源的最后更新时间
-            await sql`
-                UPDATE rss_sources 
-                SET last_update = CURRENT_TIMESTAMP 
-                WHERE id = ${source.id}
-            `;
-            
+            const newItems = await processSource(source);
+            totalNewItems += newItems;
+            console.log(`Added ${newItems} new items from ${source.name}`);
         } catch (error) {
-            console.error(`Error processing RSS source ${source.name}:`, error);
+            console.error(`Error processing source ${source.name}:`, error);
         }
     }
+
+    return { totalNewItems };
 }
 
 async function checkArticleExists(link: string): Promise<boolean> {
