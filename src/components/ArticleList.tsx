@@ -129,24 +129,25 @@ export default function ArticleList({
 
   return (
     <div className="flex flex-col h-full">
+      {/* 表格区域 - 使用 flex-1 使其填充剩余空间，并添加滚动 */}
       <div className="flex-1 overflow-auto">
         <div className="bg-white rounded-lg shadow">
-          <table className="min-w-full divide-y divide-gray-200 table-fixed">
-            <thead>
-              <tr className="bg-gray-50">
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 sticky top-0 bg-gray-50 z-10">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 sticky top-0 z-10">
+              <tr className="text-xs">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                   标题
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 sticky top-0 bg-gray-50 z-10">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                   AI概览
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 sticky top-0 bg-gray-50 z-10">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center space-x-2">
                     <span>发布时间</span>
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={() => onTimeOrderChange(timeOrder === 'asc' ? 'desc' : 'asc')}
-                        className="p-1 hover:bg-gray-200 rounded"
+                        className="p-1"
                       >
                         {timeOrder === 'asc' ? <FaSortUp /> : <FaSortDown />}
                       </button>
@@ -162,7 +163,7 @@ export default function ArticleList({
                     </div>
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24 sticky top-0 bg-gray-50 z-10">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center space-x-2">
                     <span>分类</span>
                     <FilterPopover
@@ -175,7 +176,7 @@ export default function ArticleList({
                     />
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 sticky top-0 bg-gray-50 z-10">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center space-x-2">
                     <span>订阅源</span>
                     <FilterPopover
@@ -188,7 +189,7 @@ export default function ArticleList({
                     />
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24 sticky top-0 bg-gray-50 z-10">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center space-x-2">
                     <span>来源</span>
                     <FilterPopover
@@ -201,30 +202,30 @@ export default function ArticleList({
                     />
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 sticky top-0 bg-gray-50 z-10">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   操作
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200 text-sm">
               {articles.map((article) => (
-                <tr key={article.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={article.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <a
                       href={article.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 line-clamp-2 text-sm"
+                      className="text-blue-600 hover:text-blue-800 line-clamp-3"
                     >
                       {article.title}
                     </a>
                   </td>
                   <td className="px-6 py-4">
                     <div className="group relative">
-                      <div className="line-clamp-2 text-sm text-gray-600">{article.ai_summary}</div>
+                      <div className="line-clamp-3">{article.ai_summary}</div>
                       <div className="hidden group-hover:block absolute left-0 mt-2 p-4 bg-white shadow-xl rounded-lg border border-gray-200 w-[500px] z-50">
                         <div className="relative">
-                          <div className="max-h-96 overflow-y-auto text-sm">
+                          <div className="max-h-96 overflow-y-auto">
                             {article.ai_summary}
                           </div>
                           <button
@@ -237,19 +238,13 @@ export default function ArticleList({
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     {format(new Date(article.pub_date), 'yyyy-MM-dd HH:mm')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {article.category}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {article.source_name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {article.source_type}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap">{article.category}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{article.source_name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{article.source_type}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-x-2">
                       {selectedArticleIds.includes(article.id) ? (
                         <span className="text-gray-500">已加入</span>
@@ -257,13 +252,13 @@ export default function ArticleList({
                         <>
                           <button
                             onClick={() => onAddToSummary(article)}
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                            className="text-blue-600 hover:text-blue-800"
                           >
                             加入AI总结
                           </button>
                           <button
                             onClick={() => copyToClipboard(article.link)}
-                            className="text-gray-500 hover:text-gray-700 transition-colors"
+                            className="text-gray-500 hover:text-gray-700"
                           >
                             <FaCopy className="inline" />
                           </button>
@@ -277,6 +272,8 @@ export default function ArticleList({
           </table>
         </div>
       </div>
+
+      {/* 分页器 - 固定在底部 */}
       <div className="py-4 bg-white border-t">
         <div className="flex justify-center space-x-2">
           <button

@@ -79,8 +79,8 @@ export default function Home() {
       
       <main className="flex-1 ml-64">
         {currentPage === 'all' ? (
-          <div className="flex h-screen">
-            <div className="flex-1 p-6 flex flex-col">
+          <div className="flex h-full">
+            <div className="flex-1 flex flex-col h-full">
               <ArticleList
                 articles={articles}
                 loading={loading}
@@ -94,7 +94,7 @@ export default function Home() {
                   setSelectedArticles([...selectedArticles, article]);
                 }}
                 selectedArticleIds={selectedArticles.map(a => a.id)}
-                onFilterChange={handleFilterChange}
+                onFilterChange={() => {}}
               />
             </div>
             <AISummaryPanel
