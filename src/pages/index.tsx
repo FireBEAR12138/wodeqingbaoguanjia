@@ -16,15 +16,44 @@ export default function Home() {
   const [timeOrder, setTimeOrder] = useState<'asc' | 'desc'>('desc');
   const [filters, setFilters] = useState<ArticleFilter>({});
   const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [cachedData, setCachedData] = useState<{
+    [key: string]: {
+      articles: Article[];
+      total: number;
+      timestamp: number;
+    }
+  }>({});
+
+  const getCacheKey = () => {
+    return JSON.stringify({
+      page,
+      pageSize,
+      timeOrder,
+      filters
+    });
+  };
 
   const fetchArticles = async () => {
+    const cacheKey = getCacheKey();
+    const now = Date.now();
+    const cacheTimeout = 30000; // 30秒缓存
+
+    // 检查缓存
+    if (cachedData[cacheKey] && (now - cachedData[cacheKey].timestamp) < cacheTimeout) {
+      setArticles(cachedData[cacheKey].articles);
+      setTotal(cachedData[cacheKey].total);
+      setTotalPages(Math.ceil(cachedData[cacheKey].total / pageSize));
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
       const params = new URLSearchParams({
         page: page.toString(),
-        pageSize: '10',
+        pageSize: pageSize.toString(),
         timeOrder
       });
 
@@ -48,6 +77,17 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to fetch articles');
       
       const data = await response.json();
+      
+      // 更新缓存
+      setCachedData(prev => ({
+        ...prev,
+        [cacheKey]: {
+          articles: data.articles,
+          total: data.total,
+          timestamp: now
+        }
+      }));
+
       setArticles(data.articles);
       setTotalPages(data.totalPages);
       setTotal(data.total);
@@ -62,13 +102,18 @@ export default function Home() {
     if (currentPage === 'all') {
       fetchArticles();
     }
-  }, [currentPage, page, timeOrder, filters]);
+  }, [currentPage, page, pageSize, timeOrder, filters]);
 
   const handleFilterChange = (newFilters: ArticleFilter) => {
     setFilters(newFilters);
     setPage(1);
   };
-  
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
   return (
     <div className="flex min-h-screen max-h-screen overflow-hidden bg-gray-100">
       <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
@@ -84,6 +129,8 @@ export default function Home() {
                 page={page}
                 totalPages={totalPages}
                 timeOrder={timeOrder}
+                pageSize={pageSize}
+                onPageSizeChange={handlePageSizeChange}
                 onTimeOrderChange={setTimeOrder}
                 onPageChange={setPage}
                 onAddToSummary={(article) => {

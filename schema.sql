@@ -33,6 +33,12 @@ CREATE TABLE IF NOT EXISTS system_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 添加索引
+CREATE INDEX IF NOT EXISTS idx_articles_pub_date ON rss_articles(pub_date);
+CREATE INDEX IF NOT EXISTS idx_sources_category ON rss_sources(category);
+CREATE INDEX IF NOT EXISTS idx_sources_name ON rss_sources(name);
+CREATE INDEX IF NOT EXISTS idx_sources_source_type ON rss_sources(source_type);
+
 -- 插入一些测试数据
 INSERT INTO rss_sources (category, name, source_type, url) VALUES
 ('资讯', '虎嗅', 'website', 'https://rss.huxiu.com/'),

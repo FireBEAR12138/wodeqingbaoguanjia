@@ -12,6 +12,8 @@ interface Props {
   page: number;
   totalPages: number;
   timeOrder: 'asc' | 'desc';
+  pageSize: number;
+  onPageSizeChange: (size: number) => void;
   onTimeOrderChange: (order: 'asc' | 'desc') => void;
   onPageChange: (page: number) => void;
   onAddToSummary: (article: Article) => void;
@@ -33,6 +35,8 @@ export default function ArticleList({
   page,
   totalPages,
   timeOrder,
+  pageSize,
+  onPageSizeChange,
   onTimeOrderChange,
   onPageChange,
   onAddToSummary,
@@ -123,21 +127,8 @@ export default function ArticleList({
     return new Intl.NumberFormat('zh-CN').format(num);
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-red-500 text-center py-4">{error}</div>;
-  }
-
   return (
     <div className="flex flex-col h-full">
-      {/* 表格区域 - 使用 flex-1 使其填充剩余空间，并添加滚动 */}
       <div className="flex-1 overflow-auto">
         <div className="bg-white rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
@@ -216,75 +207,115 @@ export default function ArticleList({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 text-sm">
-              {articles.map((article) => (
-                <tr key={article.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <a
-                      href={article.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 line-clamp-3"
-                    >
-                      {article.title}
-                    </a>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="group relative">
-                      <div className="line-clamp-3">{article.ai_summary}</div>
-                      <div className="hidden group-hover:block absolute left-0 mt-2 p-4 bg-white shadow-xl rounded-lg border border-gray-200 w-[500px] z-50">
-                        <div className="relative">
-                          <div className="max-h-96 overflow-y-auto">
-                            {article.ai_summary}
-                          </div>
-                          <button
-                            onClick={() => copyToClipboard(article.ai_summary)}
-                            className="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-700 bg-white rounded-full shadow-sm"
-                          >
-                            <FaCopy />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {format(new Date(article.pub_date), 'yyyy-MM-dd HH:mm')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{article.category}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{article.source_name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{article.source_type}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="space-x-2">
-                      {selectedArticleIds.includes(article.id) ? (
-                        <span className="text-gray-500">已加入</span>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => onAddToSummary(article)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            加入AI总结
-                          </button>
-                          <button
-                            onClick={() => copyToClipboard(article.link)}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
-                            <FaCopy className="inline" />
-                          </button>
-                        </>
-                      )}
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center">
+                    <div className="flex justify-center items-center space-x-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                      <span className="text-gray-500">加载中...</span>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : error ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-red-500">
+                    {error}
+                  </td>
+                </tr>
+              ) : articles.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                    暂无数据
+                  </td>
+                </tr>
+              ) : (
+                articles.map((article) => (
+                  <tr key={article.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <a
+                        href={article.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 line-clamp-3"
+                      >
+                        {article.title}
+                      </a>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="group relative">
+                        <div className="line-clamp-3">{article.ai_summary}</div>
+                        <div className="hidden group-hover:block absolute left-0 mt-2 p-4 bg-white shadow-xl rounded-lg border border-gray-200 w-[500px] z-50">
+                          <div className="absolute -top-4 -left-4 -right-4 h-4 bg-transparent"></div>
+                          <div className="relative flex">
+                            <div className="flex-1 max-h-96 overflow-y-auto pr-10">
+                              {article.ai_summary}
+                            </div>
+                            <button
+                              onClick={() => copyToClipboard(article.ai_summary)}
+                              className="absolute -top-2 -right-2 p-2 text-gray-500 hover:text-gray-700 bg-white rounded-full shadow-sm border border-gray-200"
+                            >
+                              <FaCopy />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {format(new Date(article.pub_date), 'yyyy-MM-dd HH:mm')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{article.category}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{article.source_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{article.source_type}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="space-x-2">
+                        {selectedArticleIds.includes(article.id) ? (
+                          <span className="text-gray-500">已加入</span>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => onAddToSummary(article)}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              加入AI总结
+                            </button>
+                            {/* 注释掉复制按钮
+                            <button
+                              onClick={() => copyToClipboard(article.link)}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              <FaCopy className="inline" />
+                            </button>
+                            */}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* 更新分页区域 */}
       <div className="py-4 px-6 bg-white border-t flex justify-between items-center">
-        <div className="text-sm text-gray-600">
-          共 {formatNumber(total)} 个结果
+        <div className="flex items-center space-x-4">
+          <div className="text-sm text-gray-600">
+            共 {formatNumber(total)} 个结果
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">每页显示</span>
+            <select
+              value={pageSize}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              className="border rounded px-2 py-1 text-sm"
+            >
+              <option value={10}>10</option>
+              <option value={30}>30</option>
+              <option value={50}>50</option>
+            </select>
+            <span className="text-sm text-gray-600">条</span>
+          </div>
         </div>
         <Pagination
           currentPage={page}

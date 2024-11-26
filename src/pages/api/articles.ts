@@ -17,69 +17,81 @@ export default async function handler(
       sourceTypes
     } = req.query;
 
-    let query = `
-      SELECT 
-        a.*,
-        s.name as source_name,
-        s.source_type,
-        s.category
-      FROM rss_articles a
-      JOIN rss_sources s ON a.source_id = s.id
-      WHERE 1=1
-    `;
-    
+    // 构建基础查询条件
+    const conditions = [];
     const params: any[] = [];
     let paramIndex = 1;
 
     if (startDate) {
-      query += ` AND a.pub_date >= $${paramIndex}`;
+      conditions.push(`a.pub_date >= $${paramIndex}`);
       params.push(new Date(startDate as string));
       paramIndex++;
     }
 
     if (endDate) {
-      query += ` AND a.pub_date <= $${paramIndex}`;
+      conditions.push(`a.pub_date <= $${paramIndex}`);
       params.push(new Date(endDate as string));
       paramIndex++;
     }
 
     if (categories) {
       const categoryList = (categories as string).split(',');
-      query += ` AND s.category = ANY($${paramIndex})`;
+      conditions.push(`s.category = ANY($${paramIndex})`);
       params.push(categoryList);
       paramIndex++;
     }
 
     if (sources) {
       const sourceList = (sources as string).split(',');
-      query += ` AND s.name = ANY($${paramIndex})`;
+      conditions.push(`s.name = ANY($${paramIndex})`);
       params.push(sourceList);
       paramIndex++;
     }
 
     if (sourceTypes) {
       const typeList = (sourceTypes as string).split(',');
-      query += ` AND s.source_type = ANY($${paramIndex})`;
+      conditions.push(`s.source_type = ANY($${paramIndex})`);
       params.push(typeList);
       paramIndex++;
     }
 
-    // 计算总数
-    const countResult = await sql.query(
-      `SELECT COUNT(*) FROM (${query}) as count_query`,
-      params
-    );
-    const total = parseInt(countResult.rows[0].count);
+    const whereClause = conditions.length > 0 
+      ? `WHERE ${conditions.join(' AND ')}`
+      : '';
 
-    // 添加排序和分页
-    query += ` ORDER BY a.pub_date ${timeOrder === 'desc' ? 'DESC' : 'ASC'}`;
-    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    // 使用单个查询获取总数和分页数据
+    const query = `
+      WITH filtered_articles AS (
+        SELECT 
+          a.*,
+          s.name as source_name,
+          s.source_type,
+          s.category
+        FROM rss_articles a
+        JOIN rss_sources s ON a.source_id = s.id
+        ${whereClause}
+      ),
+      total_count AS (
+        SELECT COUNT(*) as total FROM filtered_articles
+      )
+      SELECT 
+        a.*,
+        (SELECT total FROM total_count) as full_count
+      FROM filtered_articles a
+      ORDER BY a.pub_date ${timeOrder === 'desc' ? 'DESC' : 'ASC'}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
     params.push(Number(pageSize), (Number(page) - 1) * Number(pageSize));
 
     const result = await sql.query(query, params);
+    const total = result.rows[0]?.full_count ? parseInt(result.rows[0].full_count) : 0;
 
     res.status(200).json({
-      articles: result.rows,
+      articles: result.rows.map(row => ({
+        ...row,
+        full_count: undefined // 移除多余的计数字段
+      })),
       total,
       page: Number(page),
       pageSize: Number(pageSize),

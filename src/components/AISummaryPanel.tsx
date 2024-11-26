@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { FaTimes, FaGripVertical, FaCopy } from 'react-icons/fa';
+import { FaTimes, FaGripVertical } from 'react-icons/fa';
 import type { Article } from '../types/article';
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
 
 export default function AISummaryPanel({ articles, onArticlesChange, onClear }: Props) {
   const [isEditing, setIsEditing] = useState(false);
+  const [editableContent, setEditableContent] = useState('');
   
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -33,7 +34,6 @@ export default function AISummaryPanel({ articles, onArticlesChange, onClear }: 
   };
 
   const getWordCount = (text: string) => {
-    // 计算中文字数（包括标点符号）和英文单词数
     const chineseCount = (text.match(/[\u4e00-\u9fa5]|[，。！？、；：""''（）]/g) || []).length;
     const englishWords = text.match(/[a-zA-Z]+/g) || [];
     return chineseCount + englishWords.length;
@@ -48,6 +48,15 @@ export default function AISummaryPanel({ articles, onArticlesChange, onClear }: 
     }
   };
 
+  const handleEnterEditMode = () => {
+    setEditableContent(getFormattedContent());
+    setIsEditing(true);
+  };
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditableContent(e.target.value);
+  };
+
   return (
     <div className="w-96 bg-white shadow-lg h-screen overflow-hidden flex flex-col">
       <div className="p-4 border-b">
@@ -58,18 +67,13 @@ export default function AISummaryPanel({ articles, onArticlesChange, onClear }: 
         <div className="flex-1 p-4 flex flex-col">
           <div className="relative flex-1">
             <textarea
-              readOnly
-              value={getFormattedContent()}
-              className="w-full h-full p-4 border rounded-lg resize-none bg-gray-50"
+              value={editableContent}
+              onChange={handleContentChange}
+              className="w-full h-full p-4 border rounded-lg resize-none"
+              style={{ minHeight: '200px' }}
             />
-            <button
-              onClick={() => copyToClipboard(getFormattedContent())}
-              className="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-700 bg-white rounded-full shadow-sm"
-            >
-              <FaCopy />
-            </button>
             <div className="absolute bottom-2 right-2 text-sm text-gray-500">
-              字数：{getWordCount(getFormattedContent())}
+              字数：{getWordCount(editableContent)}
             </div>
           </div>
         </div>
@@ -123,20 +127,31 @@ export default function AISummaryPanel({ articles, onArticlesChange, onClear }: 
         </DragDropContext>
       )}
 
-      <div className="p-4 border-t space-x-4">
-        <button
-          onClick={() => setIsEditing(!isEditing)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          {isEditing ? '返回编辑' : '完成编辑'}
-        </button>
-        <button
-          onClick={onClear}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-        >
-          清空
-        </button>
-      </div>
+      {articles.length > 0 && (
+        <div className="p-4 border-t space-y-2">
+          <button
+            onClick={() => isEditing ? setIsEditing(false) : handleEnterEditMode()}
+            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            {isEditing ? '返回编辑' : '完成编辑'}
+          </button>
+          {isEditing ? (
+            <button
+              onClick={() => copyToClipboard(editableContent)}
+              className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+            >
+              复制到剪贴板
+            </button>
+          ) : (
+            <button
+              onClick={onClear}
+              className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+            >
+              清空
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 } 

@@ -68,30 +68,32 @@ export default function FilterPopover({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 min-w-[250px]">
+        <div className="absolute z-50 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 min-w-[400px]">
           <div className="p-3 border-b">
             <h3 className="font-medium">{title}</h3>
           </div>
 
           <div className="p-3">
             {type === 'date' ? (
-              <div className="space-y-2">
-                <div>
+              <div className="flex space-x-4">
+                <div className="flex-1">
                   <label className="block text-sm text-gray-600">开始日期</label>
                   <DatePicker
                     selected={startDate}
                     onChange={(date) => onDateChange?.(date, endDate)}
                     className="w-full border rounded p-2"
                     placeholderText="选择开始日期"
+                    dateFormat="yyyy/MM/dd"
                   />
                 </div>
-                <div>
+                <div className="flex-1">
                   <label className="block text-sm text-gray-600">结束日期</label>
                   <DatePicker
                     selected={endDate}
                     onChange={(date) => onDateChange?.(startDate, date)}
                     className="w-full border rounded p-2"
                     placeholderText="选择结束日期"
+                    dateFormat="yyyy/MM/dd"
                   />
                 </div>
               </div>
