@@ -77,7 +77,8 @@ export default async function handler(
       SELECT 
         a.*,
         s.name as source_name,
-        s.source_type
+        s.source_type,
+        s.category
       FROM rss_articles a
       JOIN rss_sources s ON a.source_id = s.id
       ${whereClause}
