@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Article } from '../types/article';
+import type { Article, ArticleFilter } from '../types/article';
 import Sidebar from '../components/Sidebar';
 import ArticleList from '../components/ArticleList';
 import RSSManager from '../components/RSSManager';
@@ -14,13 +14,7 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [timeOrder, setTimeOrder] = useState<'asc' | 'desc'>('desc');
-  const [filters, setFilters] = useState<{
-    startDate?: Date | null;
-    endDate?: Date | null;
-    authors?: string[];
-    sources?: string[];
-    sourceTypes?: string[];
-  }>({});
+  const [filters, setFilters] = useState<ArticleFilter>({});
 
   const fetchArticles = async () => {
     try {
@@ -39,8 +33,8 @@ export default function Home() {
       if (filters.endDate) {
         params.append('endDate', filters.endDate.toISOString());
       }
-      if (filters.authors?.length) {
-        params.append('authors', filters.authors.join(','));
+      if (filters.categories?.length) {
+        params.append('categories', filters.categories.join(','));
       }
       if (filters.sources?.length) {
         params.append('sources', filters.sources.join(','));
@@ -68,7 +62,7 @@ export default function Home() {
     }
   }, [currentPage, page, timeOrder, filters]);
 
-  const handleFilterChange = (newFilters: typeof filters) => {
+  const handleFilterChange = (newFilters: ArticleFilter) => {
     setFilters(newFilters);
     setPage(1);
   };
@@ -94,7 +88,7 @@ export default function Home() {
                   setSelectedArticles([...selectedArticles, article]);
                 }}
                 selectedArticleIds={selectedArticles.map(a => a.id)}
-                onFilterChange={() => {}}
+                onFilterChange={handleFilterChange}
               />
             </div>
             <AISummaryPanel
