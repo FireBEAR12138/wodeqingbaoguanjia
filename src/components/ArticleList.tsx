@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { FaSort, FaSortUp, FaSortDown, FaCopy } from 'react-icons/fa';
 import type { Article } from '../types/article';
 import FilterPopover from './FilterPopover';
+import Pagination from './Pagination';
 
 interface Props {
   articles: Article[];
@@ -22,6 +23,7 @@ interface Props {
     sources?: string[];
     sourceTypes?: string[];
   }) => void;
+  total: number;
 }
 
 export default function ArticleList({
@@ -35,7 +37,8 @@ export default function ArticleList({
   onPageChange,
   onAddToSummary,
   selectedArticleIds,
-  onFilterChange
+  onFilterChange,
+  total
 }: Props) {
   // 永久状态
   const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
@@ -113,6 +116,11 @@ export default function ArticleList({
     } catch (err) {
       console.error('复制失败:', err);
     }
+  };
+
+  // 格式化数字的函数
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('zh-CN').format(num);
   };
 
   if (loading) {
@@ -273,36 +281,16 @@ export default function ArticleList({
         </div>
       </div>
 
-      {/* 分页器 - 固定在底部 */}
-      <div className="py-4 bg-white border-t">
-        <div className="flex justify-center space-x-2">
-          <button
-            onClick={() => onPageChange(page - 1)}
-            disabled={page === 1}
-            className="px-3 py-1 rounded border disabled:opacity-50"
-          >
-            ←
-          </button>
-          {Array.from({ length: Math.min(4, totalPages) }, (_, i) => i + 1).map((pageNum) => (
-            <button
-              key={pageNum}
-              onClick={() => onPageChange(pageNum)}
-              className={`px-3 py-1 rounded border ${
-                page === pageNum ? 'bg-blue-500 text-white' : ''
-              }`}
-            >
-              {pageNum}
-            </button>
-          ))}
-          {totalPages > 4 && <span>...</span>}
-          <button
-            onClick={() => onPageChange(page + 1)}
-            disabled={page === totalPages}
-            className="px-3 py-1 rounded border disabled:opacity-50"
-          >
-            →
-          </button>
+      {/* 更新分页区域 */}
+      <div className="py-4 px-6 bg-white border-t flex justify-between items-center">
+        <div className="text-sm text-gray-600">
+          共 {formatNumber(total)} 个结果
         </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
       </div>
     </div>
   );

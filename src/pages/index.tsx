@@ -15,6 +15,7 @@ export default function Home() {
   const [totalPages, setTotalPages] = useState(1);
   const [timeOrder, setTimeOrder] = useState<'asc' | 'desc'>('desc');
   const [filters, setFilters] = useState<ArticleFilter>({});
+  const [total, setTotal] = useState(0);
 
   const fetchArticles = async () => {
     try {
@@ -49,6 +50,7 @@ export default function Home() {
       const data = await response.json();
       setArticles(data.articles);
       setTotalPages(data.totalPages);
+      setTotal(data.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取文章失败');
     } finally {
@@ -89,6 +91,7 @@ export default function Home() {
                 }}
                 selectedArticleIds={selectedArticles.map(a => a.id)}
                 onFilterChange={handleFilterChange}
+                total={total}
               />
             </div>
             <AISummaryPanel
