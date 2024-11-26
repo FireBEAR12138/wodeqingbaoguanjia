@@ -123,115 +123,120 @@ export default function RSSManager({ onClose }: Props) {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">RSS源管理</h2>
-        <div className="space-x-4">
-          <button
-            onClick={handleManualUpdate}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>更新中...</span>
-              </>
-            ) : (
-              <>
-                <span>手动更新</span>
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-2"
-          >
-            <FaPlus />
-            添加源
-          </button>
+    <div className="h-full flex flex-col">
+      <div className="p-6 border-b bg-white">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">RSS源管理</h2>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleManualUpdate}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>更新中...</span>
+                </>
+              ) : (
+                <>
+                  <span>手动更新</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-2"
+            >
+              <FaPlus />
+              添加源
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h3 className="text-lg font-medium mb-4">更新频率设置</h3>
-        <div className="flex items-center gap-4">
-          <input
-            type="number"
-            value={updateFrequency}
-            onChange={(e) => setUpdateFrequency(Number(e.target.value))}
-            className="px-3 py-2 border rounded w-24"
-            min="1"
-          />
-          <span>小时</span>
-          <button
-            onClick={handleUpdateFrequency}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            保存
-          </button>
+      <div className="flex-1 overflow-auto p-6">
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h3 className="text-lg font-medium mb-4">更新频率设置</h3>
+          <div className="flex items-center gap-4">
+            <input
+              type="number"
+              value={updateFrequency}
+              onChange={(e) => setUpdateFrequency(Number(e.target.value))}
+              className="px-3 py-2 border rounded w-24"
+              min="1"
+            />
+            <span>小时</span>
+            <button
+              onClick={handleUpdateFrequency}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              保存
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    名称
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    分类
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    类型
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    URL
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    最后更新
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    操作
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {sources.map((source) => (
+                  <tr key={source.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">{source.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{source.category}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{source.source_type}</td>
+                    <td className="px-6 py-4 whitespace-nowrap truncate max-w-xs">
+                      {source.url}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {source.last_update ? new Date(source.last_update).toLocaleString() : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setEditingSource(source)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(source.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                名称
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                分类
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                类型
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                URL
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                最后更新
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                操作
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {sources.map((source) => (
-              <tr key={source.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{source.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{source.category}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{source.source_type}</td>
-                <td className="px-6 py-4 whitespace-nowrap truncate max-w-xs">
-                  {source.url}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {source.last_update ? new Date(source.last_update).toLocaleString() : '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setEditingSource(source)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(source.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* 编辑/添加模态框 */}
       {(showAddModal || editingSource) && (
         <SourceModal
           source={editingSource}
