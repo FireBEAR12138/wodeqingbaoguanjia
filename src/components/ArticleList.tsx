@@ -54,16 +54,19 @@ export default function ArticleList({
   const [tempAuthors, setTempAuthors] = useState<string[]>([]);
   const [tempSources, setTempSources] = useState<string[]>([]);
   const [tempSourceTypes, setTempSourceTypes] = useState<string[]>([]);
+  const [tempCategories, setTempCategories] = useState<string[]>([]);
   
   // 筛选选项
   const [filterOptions, setFilterOptions] = useState<{
     authors: string[];
     sources: string[];
     sourceTypes: string[];
+    categories: string[];
   }>({
     authors: [],
     sources: [],
-    sourceTypes: []
+    sourceTypes: [],
+    categories: []
   });
 
   // 获取筛选选项
@@ -111,7 +114,7 @@ export default function ArticleList({
     });
   };
 
-  const handleFilterConfirm = (type: 'date' | 'authors' | 'sources' | 'sourceTypes') => {
+  const handleFilterConfirm = (type: 'date' | 'authors' | 'sources' | 'sourceTypes' | 'categories') => {
     switch (type) {
       case 'date':
         setDateRange(tempDateRange);
@@ -124,6 +127,9 @@ export default function ArticleList({
         break;
       case 'sourceTypes':
         setSelectedSourceTypes(tempSourceTypes);
+        break;
+      case 'categories':
+        // 添加categories的处理逻辑
         break;
     }
     
@@ -186,14 +192,14 @@ export default function ArticleList({
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center space-x-2">
-                    <span>作者</span>
+                    <span>分类</span>
                     <FilterPopover
                       type="multiple"
-                      title="筛选作者"
-                      options={filterOptions.authors}
-                      selectedValues={tempAuthors}
-                      onSelectionChange={setTempAuthors}
-                      onConfirm={() => handleFilterConfirm('authors')}
+                      title="筛选分类"
+                      options={filterOptions.categories}
+                      selectedValues={tempCategories}
+                      onSelectionChange={setTempCategories}
+                      onConfirm={() => handleFilterConfirm('categories')}
                     />
                   </div>
                 </th>
@@ -262,7 +268,7 @@ export default function ArticleList({
                   <td className="px-6 py-4 whitespace-nowrap">
                     {format(new Date(article.pub_date), 'yyyy-MM-dd HH:mm')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{article.author}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{article.category}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{article.source_name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{article.source_type}</td>
                   <td className="px-6 py-4 whitespace-nowrap">

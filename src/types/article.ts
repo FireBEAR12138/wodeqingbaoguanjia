@@ -16,6 +16,7 @@ export type Article = {
   author: string;
   source_name: string;
   source_type: string;
+  category?: string;
 }
 
 // 为 RSS Parser 添加类型
