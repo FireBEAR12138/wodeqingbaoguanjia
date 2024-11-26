@@ -105,7 +105,7 @@ export default function ImportSourcesModal({ onClose, onConfirm, existingSources
           <div className="space-y-4">
             {parsedSources.length > 0 && (
               <div>
-                <h4 className="font-medium mb-2">��添加以下RSS源：</h4>
+                <h4 className="font-medium mb-2">将添加以下RSS源：</h4>
                 <div className="border rounded-lg overflow-hidden">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
