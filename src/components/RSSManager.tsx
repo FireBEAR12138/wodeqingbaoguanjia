@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { FaPlay, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaPlay, FaEdit, FaTrash, FaPlus, FaUpload } from 'react-icons/fa';
 import SourceModal from './SourceModal';
+import ImportSourcesModal from './ImportSourcesModal';
 
 interface RSSSource {
   id: number;
@@ -22,6 +23,7 @@ export default function RSSManager({ onClose }: Props) {
   const [editingSource, setEditingSource] = useState<RSSSource | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [updateFrequency, setUpdateFrequency] = useState(24); // 默认24小时
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     fetchSources();
@@ -122,6 +124,27 @@ export default function RSSManager({ onClose }: Props) {
     }
   };
 
+  const handleImportSources = async (sources: any[]) => {
+    try {
+      const response = await fetch('/api/rss-sources/batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sources }),
+      });
+
+      if (!response.ok) throw new Error('Failed to import sources');
+
+      setShowImportModal(false);
+      fetchSources(); // 刷新列表
+      alert('RSS源导入成功');
+    } catch (error) {
+      console.error('Failed to import sources:', error);
+      alert('导入失败');
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 border-b bg-white">
@@ -143,6 +166,13 @@ export default function RSSManager({ onClose }: Props) {
                   <span>手动更新</span>
                 </>
               )}
+            </button>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-2"
+            >
+              <FaUpload />
+              批量导入
             </button>
             <button
               onClick={() => setShowAddModal(true)}
@@ -245,6 +275,14 @@ export default function RSSManager({ onClose }: Props) {
             setEditingSource(null);
           }}
           onSave={handleSaveSource}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportSourcesModal
+          onClose={() => setShowImportModal(false)}
+          onConfirm={handleImportSources}
+          existingSources={sources}
         />
       )}
     </div>
