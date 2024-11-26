@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaFilter } from 'react-icons/fa';
+import { FaFilter, FaSearch } from 'react-icons/fa';
 import "react-datepicker/dist/react-datepicker.css";
 
 interface FilterPopoverProps {
@@ -30,6 +30,7 @@ export default function FilterPopover({
 }: FilterPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -50,6 +51,11 @@ export default function FilterPopover({
     onSelectionChange(newValues);
   };
 
+  // 过滤选项
+  const filteredOptions = options.filter(option => 
+    option.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="relative" ref={popoverRef}>
       <button
@@ -62,7 +68,7 @@ export default function FilterPopover({
       </button>
 
       {isOpen && (
-        <div className="fixed transform -translate-x-1/2 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 min-w-[250px] z-50">
+        <div className="absolute z-50 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 min-w-[250px]">
           <div className="p-3 border-b">
             <h3 className="font-medium">{title}</h3>
           </div>
@@ -74,36 +80,55 @@ export default function FilterPopover({
                   <label className="block text-sm text-gray-600">开始日期</label>
                   <DatePicker
                     selected={startDate}
-                    onChange={(date: Date | null) => onDateChange?.(date, endDate)}
+                    onChange={(date) => onDateChange?.(date, endDate)}
                     className="w-full border rounded p-2"
                     placeholderText="选择开始日期"
-                    isClearable
                   />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-600">结束日期</label>
                   <DatePicker
                     selected={endDate}
-                    onChange={(date: Date | null) => onDateChange?.(startDate, date)}
+                    onChange={(date) => onDateChange?.(startDate, date)}
                     className="w-full border rounded p-2"
                     placeholderText="选择结束日期"
-                    isClearable
                   />
                 </div>
               </div>
             ) : (
-              <div className="max-h-60 overflow-y-auto">
-                {options.map((option) => (
-                  <label key={option} className="flex items-center p-2 hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      checked={selectedValues.includes(option)}
-                      onChange={() => toggleValue(option)}
-                      className="mr-2"
-                    />
-                    <span>{option}</span>
-                  </label>
-                ))}
+              <div>
+                {/* 搜索框 */}
+                <div className="mb-3 relative">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="搜索..."
+                    className="w-full px-3 py-2 border rounded-lg pr-10"
+                  />
+                  <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                </div>
+                
+                {/* 选项列表 */}
+                <div className="max-h-60 overflow-y-auto">
+                  {filteredOptions.length > 0 ? (
+                    filteredOptions.map((option) => (
+                      <label key={option} className="flex items-center p-2 hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={selectedValues.includes(option)}
+                          onChange={() => toggleValue(option)}
+                          className="mr-2"
+                        />
+                        <span>{option}</span>
+                      </label>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 text-center py-2">
+                      无匹配结果
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -117,6 +142,7 @@ export default function FilterPopover({
                   } else {
                     onSelectionChange?.([]);
                   }
+                  setSearchTerm('');
                 }}
                 className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
               >
@@ -126,6 +152,7 @@ export default function FilterPopover({
                 onClick={() => {
                   onConfirm?.();
                   setIsOpen(false);
+                  setSearchTerm('');
                 }}
                 className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
               >
