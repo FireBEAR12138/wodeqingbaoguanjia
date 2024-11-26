@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { FaSort, FaSortUp, FaSortDown, FaCopy } from 'react-icons/fa';
-import type { Article } from '../types/article';
+import type { Article, ArticleFilter } from '../types/article';
 import FilterPopover from './FilterPopover';
 
 interface Props {
@@ -15,13 +15,7 @@ interface Props {
   onPageChange: (page: number) => void;
   onAddToSummary: (article: Article) => void;
   selectedArticleIds: number[];
-  onFilterChange: (filters: {
-    startDate?: Date | null;
-    endDate?: Date | null;
-    authors?: string[];
-    sources?: string[];
-    sourceTypes?: string[];
-  }) => void;
+  onFilterChange: (filters: ArticleFilter) => void;
 }
 
 export default function ArticleList({
@@ -141,7 +135,7 @@ export default function ArticleList({
       categories: type === 'categories' ? tempCategories : selectedCategories,
       sources: type === 'sources' ? tempSources : selectedSources,
       sourceTypes: type === 'sourceTypes' ? tempSourceTypes : selectedSourceTypes,
-    });
+    } as ArticleFilter);
   };
 
   if (loading) {

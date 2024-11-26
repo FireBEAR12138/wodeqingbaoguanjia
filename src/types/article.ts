@@ -13,7 +13,6 @@ export type Article = {
   description: string;
   ai_summary: string;
   pub_date: string;
-  author: string;
   source_name: string;
   source_type: string;
   category: string;
