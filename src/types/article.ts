@@ -1,9 +1,9 @@
 export type ArticleFilter = {
-  startDate?: Date | null;
-  endDate?: Date | null;
-  categories?: string[];
-  sources?: string[];
-  sourceTypes?: string[];
+  startDate?: Date;
+  endDate?: Date;
+  author?: string;
+  source?: string;
+  sourceType?: string;
 }
 
 export type Article = {
@@ -13,9 +13,9 @@ export type Article = {
   description: string;
   ai_summary: string;
   pub_date: string;
+  author: string;
   source_name: string;
   source_type: string;
-  category: string;
 }
 
 // 为 RSS Parser 添加类型

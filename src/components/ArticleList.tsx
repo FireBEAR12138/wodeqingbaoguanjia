@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { FaSort, FaSortUp, FaSortDown, FaCopy } from 'react-icons/fa';
-import type { Article, ArticleFilter } from '../types/article';
+import type { Article } from '../types/article';
 import FilterPopover from './FilterPopover';
 
 interface Props {
@@ -15,7 +15,13 @@ interface Props {
   onPageChange: (page: number) => void;
   onAddToSummary: (article: Article) => void;
   selectedArticleIds: number[];
-  onFilterChange: (filters: ArticleFilter) => void;
+  onFilterChange: (filters: {
+    startDate?: Date | null;
+    endDate?: Date | null;
+    categories?: string[];
+    sources?: string[];
+    sourceTypes?: string[];
+  }) => void;
 }
 
 export default function ArticleList({
@@ -36,7 +42,7 @@ export default function ArticleList({
     start: null,
     end: null
   });
-  const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selectedSourceTypes, setSelectedSourceTypes] = useState<string[]>([]);
 
@@ -45,7 +51,7 @@ export default function ArticleList({
     start: null,
     end: null
   });
-  const [tempAuthors, setTempAuthors] = useState<string[]>([]);
+  const [tempCategories, setTempCategories] = useState<string[]>([]);
   const [tempSources, setTempSources] = useState<string[]>([]);
   const [tempSourceTypes, setTempSourceTypes] = useState<string[]>([]);
   
@@ -60,10 +66,6 @@ export default function ArticleList({
     sourceTypes: []
   });
 
-  // 添加分类的临时和永久状态
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [tempCategories, setTempCategories] = useState<string[]>([]);
-
   // 获取筛选选项
   useEffect(() => {
     async function fetchFilterOptions() {
@@ -71,47 +73,13 @@ export default function ArticleList({
         const response = await fetch('/api/filter-options');
         if (!response.ok) throw new Error('Failed to fetch filter options');
         const data = await response.json();
-        setFilterOptions({
-          categories: data.categories,
-          sources: data.sources,
-          sourceTypes: data.sourceTypes
-        });
+        setFilterOptions(data);
       } catch (error) {
         console.error('Error fetching filter options:', error);
       }
     }
     fetchFilterOptions();
   }, []);
-
-  useEffect(() => {
-    onFilterChange({
-      startDate: dateRange.start,
-      endDate: dateRange.end,
-      authors: selectedAuthors,
-      sources: selectedSources,
-      sourceTypes: selectedSourceTypes
-    });
-  }, [dateRange, selectedAuthors, selectedSources, selectedSourceTypes]);
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      alert('已复制到剪贴板');
-    } catch (err) {
-      console.error('复制失败:', err);
-    }
-  };
-
-  const handleDateChange = (start: Date | null, end: Date | null) => {
-    setDateRange({ start, end });
-    onFilterChange({
-      startDate: start,
-      endDate: end,
-      authors: selectedAuthors,
-      sources: selectedSources,
-      sourceTypes: selectedSourceTypes
-    });
-  };
 
   const handleFilterConfirm = (type: 'date' | 'categories' | 'sources' | 'sourceTypes') => {
     switch (type) {
@@ -135,7 +103,16 @@ export default function ArticleList({
       categories: type === 'categories' ? tempCategories : selectedCategories,
       sources: type === 'sources' ? tempSources : selectedSources,
       sourceTypes: type === 'sourceTypes' ? tempSourceTypes : selectedSourceTypes,
-    } as ArticleFilter);
+    });
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('已复制到剪贴板');
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
   };
 
   if (loading) {
