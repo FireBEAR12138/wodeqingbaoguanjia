@@ -54,20 +54,21 @@ export default function ArticleList({
   const [tempAuthors, setTempAuthors] = useState<string[]>([]);
   const [tempSources, setTempSources] = useState<string[]>([]);
   const [tempSourceTypes, setTempSourceTypes] = useState<string[]>([]);
-  const [tempCategories, setTempCategories] = useState<string[]>([]);
   
   // 筛选选项
   const [filterOptions, setFilterOptions] = useState<{
-    authors: string[];
+    categories: string[];
     sources: string[];
     sourceTypes: string[];
-    categories: string[];
   }>({
-    authors: [],
+    categories: [],
     sources: [],
-    sourceTypes: [],
-    categories: []
+    sourceTypes: []
   });
+
+  // 添加分类的临时和永久状态
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [tempCategories, setTempCategories] = useState<string[]>([]);
 
   // 获取筛选选项
   useEffect(() => {
@@ -76,7 +77,11 @@ export default function ArticleList({
         const response = await fetch('/api/filter-options');
         if (!response.ok) throw new Error('Failed to fetch filter options');
         const data = await response.json();
-        setFilterOptions(data);
+        setFilterOptions({
+          categories: data.categories,
+          sources: data.sources,
+          sourceTypes: data.sourceTypes
+        });
       } catch (error) {
         console.error('Error fetching filter options:', error);
       }
@@ -114,13 +119,13 @@ export default function ArticleList({
     });
   };
 
-  const handleFilterConfirm = (type: 'date' | 'authors' | 'sources' | 'sourceTypes' | 'categories') => {
+  const handleFilterConfirm = (type: 'date' | 'categories' | 'sources' | 'sourceTypes') => {
     switch (type) {
       case 'date':
         setDateRange(tempDateRange);
         break;
-      case 'authors':
-        setSelectedAuthors(tempAuthors);
+      case 'categories':
+        setSelectedCategories(tempCategories);
         break;
       case 'sources':
         setSelectedSources(tempSources);
@@ -128,15 +133,12 @@ export default function ArticleList({
       case 'sourceTypes':
         setSelectedSourceTypes(tempSourceTypes);
         break;
-      case 'categories':
-        // 添加categories的处理逻辑
-        break;
     }
     
     onFilterChange({
       startDate: type === 'date' ? tempDateRange.start : dateRange.start,
       endDate: type === 'date' ? tempDateRange.end : dateRange.end,
-      authors: type === 'authors' ? tempAuthors : selectedAuthors,
+      categories: type === 'categories' ? tempCategories : selectedCategories,
       sources: type === 'sources' ? tempSources : selectedSources,
       sourceTypes: type === 'sourceTypes' ? tempSourceTypes : selectedSourceTypes,
     });

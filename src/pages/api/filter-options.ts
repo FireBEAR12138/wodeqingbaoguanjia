@@ -6,12 +6,12 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    // 获取所有唯一的作者
-    const authorsResult = await sql`
-      SELECT DISTINCT author 
-      FROM rss_articles 
-      WHERE author IS NOT NULL 
-      ORDER BY author
+    // 获取所有唯一的分类
+    const categoriesResult = await sql`
+      SELECT DISTINCT category 
+      FROM rss_sources 
+      WHERE category IS NOT NULL 
+      ORDER BY category
     `;
 
     // 获取所有唯一的订阅源
@@ -29,7 +29,7 @@ export default async function handler(
     `;
 
     res.status(200).json({
-      authors: authorsResult.rows.map(row => row.author),
+      categories: categoriesResult.rows.map(row => row.category),
       sources: sourcesResult.rows.map(row => row.name),
       sourceTypes: sourceTypesResult.rows.map(row => row.source_type)
     });
