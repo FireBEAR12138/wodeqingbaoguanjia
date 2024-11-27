@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaPlay, FaEdit, FaTrash, FaPlus, FaUpload } from 'react-icons/fa';
+import { FaPlay, FaEdit, FaTrash, FaPlus, FaUpload, FaSync } from 'react-icons/fa';
 import SourceModal from './SourceModal';
 import ImportSourcesModal from './ImportSourcesModal';
 
@@ -145,6 +145,28 @@ export default function RSSManager({ onClose }: Props) {
     }
   };
 
+  const handleSingleSourceUpdate = async (sourceId: number, sourceName: string) => {
+    try {
+      const response = await fetch(`/api/update-rss?sourceId=${sourceId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update source ${sourceName}`);
+      }
+
+      const result = await response.json();
+      alert(`${sourceName} 更新成功，新增 ${result.totalNewItems} 篇文章`);
+      fetchSources(); // 刷新源列表以更新最后更新时间
+    } catch (error) {
+      console.error(`Error updating source ${sourceName}:`, error);
+      alert(`更新失败: ${sourceName}`);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 border-b bg-white">
@@ -256,6 +278,13 @@ export default function RSSManager({ onClose }: Props) {
                           className="text-red-600 hover:text-red-800"
                         >
                           <FaTrash />
+                        </button>
+                        <button
+                          onClick={() => handleSingleSourceUpdate(source.id, source.name)}
+                          className="text-green-600 hover:text-green-800"
+                          title="更新此源"
+                        >
+                          <FaSync />
                         </button>
                       </div>
                     </td>

@@ -132,7 +132,7 @@ async function checkArticleExists(link: string): Promise<boolean> {
 }
 
 async function generateAISummary(content: string, title: string): Promise<string> {
-    const prompt = `请用中文简要总结以下内容（200字以内）：\n\n标题：${title}\n\n内容：${content}\noutput:`;
+    const prompt = `请用中文简要总结以下内容（200字以内）：\n'''标题：${title}\n\n内容：${content}\noutput:`;
     
     const response = await bedrock.send(new InvokeModelCommand({
         modelId: process.env.MODEL_ID,
