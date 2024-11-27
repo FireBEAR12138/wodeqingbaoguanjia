@@ -1,9 +1,79 @@
 import { useState, useEffect } from 'react';
 import type { Article, ArticleFilter } from '../types/article';
+import { Input, Button, message } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
+import styled from 'styled-components';
 import Sidebar from '../components/Sidebar';
 import ArticleList from '../components/ArticleList';
 import RSSManager from '../components/RSSManager';
 import AISummaryPanel from '../components/AISummaryPanel';
+import SearchView from '../components/SearchView';
+
+const SearchHeader = styled.div`
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+`;
+
+const SearchContainer = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .search-input {
+    width: 600px;
+
+    .ant-input-affix-wrapper {
+      border-radius: 8px;
+      height: 40px;
+      padding: 4px 11px;
+      transition: all 0.3s;
+      border: 1px solid #d9d9d9;
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
+
+      &:hover, &:focus {
+        border-color: #40a9ff;
+        box-shadow: 0 2px 0 rgba(24, 144, 255, 0.1);
+      }
+
+      .anticon {
+        color: #bfbfbf;
+      }
+    }
+
+    .ant-input-group-addon {
+      background-color: #1890ff;
+      border-color: #1890ff;
+      border-radius: 0 8px 8px 0 !important;
+      
+      .ant-btn {
+        background: transparent;
+        border: none;
+        color: white;
+        box-shadow: none;
+        padding: 0 16px;
+        height: 38px;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+
+    input {
+      font-size: 15px;
+
+      &::placeholder {
+        color: #bfbfbf;
+      }
+    }
+  }
+`;
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState('all');
@@ -17,36 +87,10 @@ export default function Home() {
   const [filters, setFilters] = useState<ArticleFilter>({});
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [cachedData, setCachedData] = useState<{
-    [key: string]: {
-      articles: Article[];
-      total: number;
-      timestamp: number;
-    }
-  }>({});
-
-  const getCacheKey = () => {
-    return JSON.stringify({
-      page,
-      pageSize,
-      timeOrder,
-      filters
-    });
-  };
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchArticles = async () => {
-    const cacheKey = getCacheKey();
-    const now = Date.now();
-    const cacheTimeout = 30000; // 30秒缓存
-
-    // 检查缓存
-    if (cachedData[cacheKey] && (now - cachedData[cacheKey].timestamp) < cacheTimeout) {
-      setArticles(cachedData[cacheKey].articles);
-      setTotal(cachedData[cacheKey].total);
-      setTotalPages(Math.ceil(cachedData[cacheKey].total / pageSize));
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
@@ -56,6 +100,10 @@ export default function Home() {
         pageSize: pageSize.toString(),
         timeOrder
       });
+
+      if (searchQuery) {
+        params.append('searchQuery', searchQuery);
+      }
 
       if (filters.startDate) {
         params.append('startDate', filters.startDate.toISOString());
@@ -74,20 +122,10 @@ export default function Home() {
       }
 
       const response = await fetch(`/api/articles?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch articles');
+      if (!response.ok) throw new Error('获取文章失败');
       
       const data = await response.json();
       
-      // 更新缓存
-      setCachedData(prev => ({
-        ...prev,
-        [cacheKey]: {
-          articles: data.articles,
-          total: data.total,
-          timestamp: now
-        }
-      }));
-
       setArticles(data.articles);
       setTotalPages(data.totalPages);
       setTotal(data.total);
@@ -102,16 +140,82 @@ export default function Home() {
     if (currentPage === 'all') {
       fetchArticles();
     }
-  }, [currentPage, page, pageSize, timeOrder, filters]);
+  }, [currentPage, page, pageSize, timeOrder, filters, searchQuery]);
 
-  const handleFilterChange = (newFilters: ArticleFilter) => {
-    setFilters(newFilters);
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    setIsSearchMode(!!value);
     setPage(1);
   };
 
-  const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize);
+  const handleExitSearch = () => {
+    setIsSearchMode(false);
+    setSearchQuery('');
     setPage(1);
+  };
+
+  const handleAddToSummary = (article: Article) => {
+    if (!selectedArticles.some(a => a.id === article.id)) {
+      setSelectedArticles(prev => [...prev, article]);
+      message.success('已添加到AI总结');
+    }
+  };
+
+  const renderMainContent = () => {
+    if (currentPage !== 'all') {
+      return <RSSManager />;
+    }
+
+    if (isSearchMode) {
+      return (
+        <SearchView
+          articles={articles}
+          loading={loading}
+          searchQuery={searchQuery}
+          onSearch={handleSearch}
+          onExit={handleExitSearch}
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          selectedArticles={selectedArticles}
+          onAddToSummary={handleAddToSummary}
+        />
+      );
+    }
+
+    return (
+      <>
+        <SearchHeader>
+          <SearchContainer>
+            <Input.Search
+              className="search-input"
+              placeholder="输入搜索关键词"
+              allowClear
+              enterButton="搜索"
+              prefix={<SearchOutlined />}
+              onSearch={handleSearch}
+            />
+          </SearchContainer>
+        </SearchHeader>
+        <ArticleList
+          articles={articles}
+          loading={loading}
+          error={error}
+          page={page}
+          totalPages={totalPages}
+          timeOrder={timeOrder}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          onTimeOrderChange={setTimeOrder}
+          onPageChange={setPage}
+          onAddToSummary={handleAddToSummary}
+          selectedArticleIds={selectedArticles.map(a => a.id)}
+          onFilterChange={setFilters}
+          total={total}
+        />
+      </>
+    );
   };
 
   return (
@@ -119,37 +223,16 @@ export default function Home() {
       <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
       
       <main className="flex-1 ml-64">
-        {currentPage === 'all' ? (
-          <div className="flex h-full">
-            <div className="flex-1 flex flex-col h-full">
-              <ArticleList
-                articles={articles}
-                loading={loading}
-                error={error}
-                page={page}
-                totalPages={totalPages}
-                timeOrder={timeOrder}
-                pageSize={pageSize}
-                onPageSizeChange={handlePageSizeChange}
-                onTimeOrderChange={setTimeOrder}
-                onPageChange={setPage}
-                onAddToSummary={(article) => {
-                  setSelectedArticles([...selectedArticles, article]);
-                }}
-                selectedArticleIds={selectedArticles.map(a => a.id)}
-                onFilterChange={handleFilterChange}
-                total={total}
-              />
-            </div>
-            <AISummaryPanel
-              articles={selectedArticles}
-              onArticlesChange={setSelectedArticles}
-              onClear={() => setSelectedArticles([])}
-            />
+        <div className="flex h-full">
+          <div className="flex-1 flex flex-col h-full">
+            {renderMainContent()}
           </div>
-        ) : (
-          <RSSManager />
-        )}
+          <AISummaryPanel
+            articles={selectedArticles}
+            onArticlesChange={setSelectedArticles}
+            onClear={() => setSelectedArticles([])}
+          />
+        </div>
       </main>
     </div>
   );

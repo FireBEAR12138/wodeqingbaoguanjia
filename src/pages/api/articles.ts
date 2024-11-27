@@ -1,6 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { sql } from '../../lib/db';
 
+// 处理搜索结果高亮的辅助函数
+const highlightText = (text: string | null, searchQuery: string): string => {
+  if (!text || !searchQuery) return text || '';
+  const searchRegex = new RegExp(searchQuery, 'gi');
+  return text.replace(searchRegex, (match: string) => `<mark>${match}</mark>`);
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -14,13 +21,24 @@ export default async function handler(
       endDate,
       categories,
       sources,
-      sourceTypes
+      sourceTypes,
+      searchQuery
     } = req.query;
 
     // 构建基础查询条件
     const conditions = [];
     const params: any[] = [];
     let paramIndex = 1;
+
+    if (searchQuery) {
+      conditions.push(`(
+        a.title ILIKE $${paramIndex} OR 
+        a.description ILIKE $${paramIndex} OR 
+        a.ai_summary ILIKE $${paramIndex}
+      )`);
+      params.push(`%${searchQuery}%`);
+      paramIndex++;
+    }
 
     if (startDate) {
       conditions.push(`a.pub_date >= $${paramIndex}`);
@@ -59,7 +77,24 @@ export default async function handler(
       ? `WHERE ${conditions.join(' AND ')}`
       : '';
 
-    // 使用单个查询获取总数和分页数据
+    // 修改查询以支持搜索相关度排序
+    const orderClause = searchQuery
+      ? `
+        CASE 
+          WHEN a.title ILIKE $${paramIndex} THEN 1
+          WHEN a.description ILIKE $${paramIndex} THEN 2
+          WHEN a.ai_summary ILIKE $${paramIndex} THEN 3
+          ELSE 4
+        END,
+        a.pub_date ${timeOrder === 'desc' ? 'DESC' : 'ASC'}
+      `
+      : `a.pub_date ${timeOrder === 'desc' ? 'DESC' : 'ASC'}`;
+
+    if (searchQuery) {
+      params.push(`%${searchQuery}%`);
+      paramIndex++;
+    }
+
     const query = `
       WITH filtered_articles AS (
         SELECT 
@@ -78,7 +113,7 @@ export default async function handler(
         a.*,
         (SELECT total FROM total_count) as full_count
       FROM filtered_articles a
-      ORDER BY a.pub_date ${timeOrder === 'desc' ? 'DESC' : 'ASC'}
+      ORDER BY ${orderClause}
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
@@ -87,11 +122,20 @@ export default async function handler(
     const result = await sql.query(query, params);
     const total = result.rows[0]?.full_count ? parseInt(result.rows[0].full_count) : 0;
 
+    // 处理搜索结果高亮
+    const articles = result.rows.map(row => {
+      let processedRow = { ...row };
+      if (searchQuery) {
+        processedRow.title = highlightText(row.title, searchQuery as string);
+        processedRow.description = highlightText(row.description, searchQuery as string);
+        processedRow.ai_summary = highlightText(row.ai_summary, searchQuery as string);
+      }
+      delete processedRow.full_count;
+      return processedRow;
+    });
+
     res.status(200).json({
-      articles: result.rows.map(row => ({
-        ...row,
-        full_count: undefined // 移除多余的计数字段
-      })),
+      articles,
       total,
       page: Number(page),
       pageSize: Number(pageSize),
