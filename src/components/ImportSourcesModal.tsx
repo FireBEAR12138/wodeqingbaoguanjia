@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FaTimes, FaUpload } from 'react-icons/fa';
 import Papa from 'papaparse';
+import { message } from 'antd';
 
 interface ImportSource {
   category: string;
@@ -27,11 +28,10 @@ export default function ImportSourcesModal({ onClose, onConfirm, existingSources
     Papa.parse(file, {
       complete: (results) => {
         const sources: ImportSource[] = [];
-        const duplicateItems: ImportSource[] = [];
+        const duplicates: ImportSource[] = [];
 
-        // 跳过标题行
         results.data.slice(1).forEach((row: any) => {
-          if (row.length >= 4 && row[0] && row[1] && row[2] && row[3]) {
+          if (row.length >= 4) {
             const source = {
               category: row[0],
               name: row[1],
@@ -39,13 +39,15 @@ export default function ImportSourcesModal({ onClose, onConfirm, existingSources
               url: row[3]
             };
 
-            // 检查重复
+            // 检查是否与现有源重复
             const isDuplicate = existingSources.some(
-              existing => existing.name === source.name || existing.url === source.url
+              existing => 
+                existing.name.toLowerCase() === source.name.toLowerCase() ||
+                existing.url.toLowerCase() === source.url.toLowerCase()
             );
 
             if (isDuplicate) {
-              duplicateItems.push(source);
+              duplicates.push(source);
             } else {
               sources.push(source);
             }
@@ -53,11 +55,22 @@ export default function ImportSourcesModal({ onClose, onConfirm, existingSources
         });
 
         setParsedSources(sources);
-        setDuplicates(duplicateItems);
+        setDuplicates(duplicates);
         setShowPreview(true);
       },
       header: false
     });
+  };
+
+  const handleConfirm = () => {
+    if (parsedSources.length === 0) {
+      message.error('没有可导入的RSS源');
+      return;
+    }
+    if (duplicates.length > 0) {
+      message.warning(`已过滤 ${duplicates.length} 个重复的RSS源`);
+    }
+    onConfirm(parsedSources);
   };
 
   return (
@@ -103,6 +116,34 @@ export default function ImportSourcesModal({ onClose, onConfirm, existingSources
           </div>
         ) : (
           <div className="space-y-4">
+            {duplicates.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2 text-yellow-600">以下RSS源可能重复（将被过滤）：</h4>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">名称</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">来源</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">链接</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {duplicates.map((source, index) => (
+                        <tr key={index} className="bg-yellow-50">
+                          <td className="px-6 py-4">{source.category}</td>
+                          <td className="px-6 py-4">{source.name}</td>
+                          <td className="px-6 py-4">{source.source_type}</td>
+                          <td className="px-6 py-4 truncate max-w-xs">{source.url}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {parsedSources.length > 0 && (
               <div>
                 <h4 className="font-medium mb-2">将添加以下RSS源：</h4>
@@ -131,47 +172,23 @@ export default function ImportSourcesModal({ onClose, onConfirm, existingSources
               </div>
             )}
 
-            {duplicates.length > 0 && (
-              <div>
-                <h4 className="font-medium mb-2 text-yellow-600">以下RSS源可能重复：</h4>
-                <div className="border rounded-lg overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">名称</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">来源</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">链接</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {duplicates.map((source, index) => (
-                        <tr key={index} className="bg-yellow-50">
-                          <td className="px-6 py-4">{source.category}</td>
-                          <td className="px-6 py-4">{source.name}</td>
-                          <td className="px-6 py-4">{source.source_type}</td>
-                          <td className="px-6 py-4 truncate max-w-xs">{source.url}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-4 mt-6">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+                className="px-4 py-2 border rounded hover:bg-gray-50"
               >
                 取消
               </button>
               <button
-                onClick={() => onConfirm(parsedSources)}
-                className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+                onClick={handleConfirm}
                 disabled={parsedSources.length === 0}
+                className={`px-4 py-2 rounded text-white ${
+                  parsedSources.length === 0
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
               >
-                确认导入
+                {parsedSources.length === 0 ? '无可导入源' : `导入 ${parsedSources.length} 个源`}
               </button>
             </div>
           </div>

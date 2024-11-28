@@ -162,7 +162,7 @@ export default function Home() {
   };
 
   const renderMainContent = () => {
-    if (currentPage !== 'all') {
+    if (currentPage === 'rss-manage') {
       return <RSSManager />;
     }
 
@@ -186,18 +186,17 @@ export default function Home() {
 
     return (
       <>
-        <SearchHeader>
-          <SearchContainer>
-            <Input.Search
-              className="search-input"
-              placeholder="输入搜索关键词"
-              allowClear
-              enterButton="搜索"
-              prefix={<SearchOutlined />}
-              onSearch={handleSearch}
-            />
-          </SearchContainer>
-        </SearchHeader>
+        <SearchContainer>
+          <Input.Search
+            className="search-input"
+            size="large"
+            placeholder="输入搜索关键词"
+            allowClear
+            enterButton="搜索"
+            prefix={<SearchOutlined />}
+            onSearch={handleSearch}
+          />
+        </SearchContainer>
         <ArticleList
           articles={articles}
           loading={loading}

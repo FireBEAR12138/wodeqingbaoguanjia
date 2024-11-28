@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 import { FaSort, FaSortUp, FaSortDown, FaCopy } from 'react-icons/fa';
 import type { Article } from '../types/article';
 import FilterPopover from './FilterPopover';
@@ -125,6 +126,14 @@ export default function ArticleList({
   // 格式化数字的函数
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('zh-CN').format(num);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = parseISO(dateString);
+    return format(date, 'yyyy-MM-dd HH:mm', {
+      locale: zhCN,
+      timeZone: 'UTC'
+    });
   };
 
   return (
@@ -261,7 +270,7 @@ export default function ArticleList({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {format(new Date(article.pub_date), 'yyyy-MM-dd HH:mm')}
+                      {formatDate(article.pub_date)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">{article.category}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{article.source_name}</td>
