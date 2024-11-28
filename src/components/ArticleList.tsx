@@ -130,9 +130,15 @@ export default function ArticleList({
 
   const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
-    return format(date, 'yyyy-MM-dd HH:mm', {
-      locale: zhCN,
-      timeZone: 'UTC'
+    const utcDate = new Date(Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      date.getUTCHours(),
+      date.getUTCMinutes()
+    ));
+    return format(utcDate, 'yyyy-MM-dd HH:mm', {
+      locale: zhCN
     });
   };
 
